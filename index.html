@@ -28,7 +28,6 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .blocks-col { padding: 20px; border-right: 1px solid var(--border); overflow-y: auto; }
 .summary-col { padding: 20px; position: sticky; top: 53px; height: calc(100vh - 53px); overflow-y: auto; }
 
-/* 블록 카드 */
 .block-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
 .block-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #faf9f7; border-bottom: 1px solid var(--border-light); }
 .block-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-hint); background: var(--border-light); border-radius: 3px; padding: 2px 7px; margin-right: 8px; }
@@ -37,13 +36,11 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .remove-btn { font-size: 11px; color: var(--text-hint); background: none; border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .remove-btn:hover { color: var(--danger); border-color: var(--danger); }
 
-/* 3단 본문 */
 .block-body { display: grid; grid-template-columns: 200px 1fr 300px; align-items: stretch; }
 .col-addr { padding: 14px; border-right: 1px solid var(--border-light); }
 .col-inputs { padding: 14px; border-right: 1px solid var(--border-light); }
-.col-map { display: flex; flex-direction: column; }
+.col-map { display: flex; flex-direction: column; min-height: 320px; }
 
-/* 주소 */
 .addr-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 6px; }
 .addr-display { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; min-height: 32px; line-height: 1.5; }
 .addr-btn { width: 100%; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--accent); border: none; border-radius: 6px; padding: 7px; cursor: pointer; margin-bottom: 6px; }
@@ -53,7 +50,6 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .ext-btn:hover { background: var(--bg); }
 .ext-btn.show, .copy-btn.show { display: block; }
 
-/* 입력 */
 .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .inputs-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .input-field { display: flex; flex-direction: column; gap: 3px; }
@@ -63,7 +59,6 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin: 6px 0; display: flex; align-items: center; gap: 6px; }
 .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
 
-/* 결과 */
 .result-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-light); }
 .metric { background: var(--bg); border-radius: 6px; padding: 7px 8px; }
 .metric-label { font-size: 9px; color: var(--text-hint); margin-bottom: 2px; }
@@ -71,9 +66,10 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .metric-value.hi { color: var(--accent); }
 .metric-unit { font-size: 9px; color: var(--text-hint); }
 
-/* 지도 */
-.map-wrap { flex: 1; min-height: 300px; height: 300px; }
-.map-placeholder { width: 100%; height: 100%; min-height: 300px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-hint); text-align: center; line-height: 1.8; background: var(--bg); }
+/* 지도: flex:1로 남은 높이 채움, min-height px 고정 */
+.map-wrap { flex: 1; min-height: 280px; position: relative; }
+.map-placeholder { width: 100%; height: 100%; min-height: 280px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-hint); text-align: center; line-height: 1.8; background: var(--bg); }
+/* Leaflet 컨테이너는 px 고정 높이 필요 — JS에서 직접 지정 */
 .map-tools { display: flex; gap: 5px; padding: 6px 8px; background: var(--surface); border-top: 1px solid var(--border-light); flex-wrap: wrap; }
 .tool-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; }
 .tool-btn.active { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
@@ -81,7 +77,6 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .measure-result { font-size: 10px; color: var(--warn); padding: 0 8px 6px; display: none; }
 .measure-result.show { display: block; }
 
-/* 요약 */
 .summary-title { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 14px; }
 .summary-block-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .summary-block-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
@@ -135,20 +130,43 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 <script>
 var VKEY = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
+var MAP_H = 280; // 지도 높이(px) — 한 곳에서 관리
 
-// ── 지도 초기화 ───────────────────────────────────────
-// 좌표: daum.Postcode 응답의 data.x(경도) / data.y(위도) 직접 사용
-// 카카오 Geocoder / 카카오 지도 SDK 완전 제거
-// 지도: Leaflet + vworld WMTS(일반) + vworld WMS(지적도)
+// ── vworld 주소→좌표 변환 ─────────────────────────────
+// fetch 직접 호출 (CORS 허용). 카카오 Geocoder 완전 대체.
+function geocodeVworld(address, callback) {
+  var url = 'https://api.vworld.kr/req/address'
+    + '?service=address&request=getcoord&version=2.0&crs=epsg:4326'
+    + '&format=json&type=both'
+    + '&address=' + encodeURIComponent(address)
+    + '&key=' + VKEY;
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var res = data && data.response;
+      if (res && res.status === 'OK' && res.result && res.result.point) {
+        var pt = res.result.point;
+        callback(parseFloat(pt.y), parseFloat(pt.x)); // y=위도, x=경도
+      } else {
+        callback(null, null);
+      }
+    })
+    .catch(function() { callback(null, null); });
+}
+
+// ── 지도 초기화 (Leaflet + vworld) ───────────────────
 function initMap(id, lat, lng, label) {
   var wrap = document.getElementById('map-' + id);
   if (!wrap) return;
- wrap.innerHTML = '<div id="lmap-' + id + '" style="width:100%;height:300px;"></div>';
+
+  // Leaflet은 높이가 px로 명시된 div 필요
+  wrap.innerHTML = '<div id="lmap-' + id + '" style="width:100%;height:' + MAP_H + 'px;"></div>';
 
   var map = L.map('lmap-' + id, { center: [lat, lng], zoom: 17 });
 
-  // vworld 일반지도 베이스
-  var baseLayer = L.tileLayer(
+  // vworld 일반지도
+  L.tileLayer(
     'https://api.vworld.kr/req/wmts/1.0.0/' + VKEY + '/Base/{z}/{y}/{x}.png',
     { attribution: '© <a href="https://www.vworld.kr">VWorld</a>', maxZoom: 19 }
   ).addTo(map);
@@ -228,14 +246,14 @@ function clearMeasure(id) {
 }
 
 // ── 주소 검색 ─────────────────────────────────────────
-// daum.Postcode 응답에 data.x(경도), data.y(위도) 포함 → Geocoder 불필요
 function openAddressSearch(id) {
   new daum.Postcode({
     oncomplete: function(data) {
       var jibun = data.jibunAddress || data.autoJibunAddress || '';
-      var display = jibun || data.roadAddress;
-      document.getElementById('addr-display-' + id).textContent = display;
+      var road  = data.roadAddress || '';
+      var display = jibun || road;
 
+      document.getElementById('addr-display-' + id).textContent = display;
       var nm = document.getElementById('name-' + id);
       if (nm && !nm.value) nm.value = (data.bname || '') + ' ' + (data.jibun || '');
 
@@ -245,24 +263,45 @@ function openAddressSearch(id) {
       var copyBtn = document.getElementById('copy-btn-' + id);
       if (copyBtn) copyBtn.dataset.addr = display;
 
-      var lat = parseFloat(data.y);
-      var lng = parseFloat(data.x);
       var label = (data.bname || '') + ' ' + (data.jibun || '');
 
-      if (!lat || !lng) return; // 좌표 없으면 무시
-
-      var obj = mapObjs[id];
-      if (obj && obj.map) {
-        // 이미 지도 있으면 중심 이동 + 마커 갱신
-        obj.map.setView([lat, lng], 17);
-        if (obj.marker) obj.map.removeLayer(obj.marker);
-        obj.marker = L.marker([lat, lng]).addTo(obj.map);
-        obj.marker.bindPopup('<div style="font-size:11px;white-space:nowrap;">' + label + '</div>').openPopup();
-      } else {
-        initMap(id, lat, lng, label);
+      // 지번 → 도로명 순으로 vworld geocoding 시도
+      function tryGeocode(addr, fallback) {
+        geocodeVworld(addr, function(lat, lng) {
+          if (lat && lng) {
+            placeMap(id, lat, lng, label);
+          } else if (fallback) {
+            geocodeVworld(fallback, function(lat2, lng2) {
+              if (lat2 && lng2) placeMap(id, lat2, lng2, label);
+              else showGeoError(id);
+            });
+          } else {
+            showGeoError(id);
+          }
+        });
       }
+
+      if (jibun) tryGeocode(jibun, road);
+      else if (road) tryGeocode(road, null);
     }
   }).open();
+}
+
+function placeMap(id, lat, lng, label) {
+  var obj = mapObjs[id];
+  if (obj && obj.map) {
+    obj.map.setView([lat, lng], 17);
+    if (obj.marker) obj.map.removeLayer(obj.marker);
+    obj.marker = L.marker([lat, lng]).addTo(obj.map);
+    obj.marker.bindPopup('<div style="font-size:11px;white-space:nowrap;">' + label + '</div>').openPopup();
+  } else {
+    initMap(id, lat, lng, label);
+  }
+}
+
+function showGeoError(id) {
+  var wrap = document.getElementById('map-' + id);
+  if (wrap) wrap.innerHTML = '<div class="map-placeholder" style="min-height:' + MAP_H + 'px;">좌표를 찾을 수 없습니다.<br>지번/도로명 주소를 확인해 주세요.</div>';
 }
 
 // ── 용도지역 → 건폐율 ────────────────────────────────
@@ -305,7 +344,7 @@ function copyAddr(id) {
   });
 }
 
-// ── 구역 카드 생성 ────────────────────────────────────
+// ── 구역 카드 ─────────────────────────────────────────
 function addBlock() {
   blockCount++;
   var id = blockCount;
@@ -314,7 +353,6 @@ function addBlock() {
   var div = document.createElement('div');
   div.className = 'block-card';
   div.id = 'block-' + id;
-
   div.innerHTML =
     '<div class="block-header">'
       + '<span class="block-num">' + String(id).padStart(2,'0') + '</span>'
@@ -323,7 +361,6 @@ function addBlock() {
     + '</div>'
     + '<div class="block-body">'
 
-    // 주소 컬럼
     + '<div class="col-addr">'
       + '<div class="addr-label">위치</div>'
       + '<div class="addr-display" id="addr-display-' + id + '">—</div>'
@@ -335,7 +372,6 @@ function addBlock() {
       + '</div>'
     + '</div>'
 
-    // 입력 컬럼
     + '<div class="col-inputs">'
       + '<input type="hidden" id="bcr-' + id + '" value="60">'
       + '<div class="section-label">공통</div>'
@@ -394,9 +430,10 @@ function addBlock() {
       + '</div>'
     + '</div>'
 
-    // 지도 컬럼
     + '<div class="col-map">'
-      + '<div class="map-wrap"><div id="map-' + id + '" class="map-placeholder">주소를 검색하면<br>지도가 표시됩니다</div></div>'
+      + '<div class="map-wrap" id="map-' + id + '">'
+        + '<div class="map-placeholder" style="min-height:' + MAP_H + 'px;">주소를 검색하면<br>지도가 표시됩니다</div>'
+      + '</div>'
       + '<div class="map-tools">'
         + '<button class="tool-btn layer-on" id="cadastral-btn-' + id + '">지적도 ON</button>'
         + '<button class="tool-btn" id="measure-btn-' + id + '">거리재기</button>'
