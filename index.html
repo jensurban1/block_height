@@ -78,9 +78,7 @@
   .summary-metric-value { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; }
   .summary-metric-value.big { color: var(--accent); font-size: 24px; }
   .summary-metric-unit { font-size: 11px; color: var(--text-hint); font-family: 'Noto Sans KR', sans-serif; }
-  .zone-msg { font-size:11px; margin-top:4px; min-height:16px; }
-  .zone-msg.ok { color:var(--success); }
-  .zone-msg.err { color:var(--text-hint); }
+  .zone-select { font-family:'Noto Sans KR',sans-serif; font-size:12px; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:7px; padding:6px 8px; width:100%; cursor:pointer; }
   .eum-btn { display:none; font-size:11px; font-family:'Noto Sans KR',sans-serif; font-weight:500; padding:7px 12px; border-radius:5px; border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent-text); cursor:pointer; text-decoration:none; text-align:center; width:100%; }
   .eum-btn:hover { background:var(--accent); color:#fff; }
   .eum-btn.show { display:block; }
@@ -177,7 +175,6 @@ function initLeafletMap(id, lat, lng, label) {
     mapObjs[id] = { map: map, baseLayer: baseLayer, cadastralLayer: cadastralLayer, satLayer: satLayer, cadastralOn: true, satOn: false };
     measureState[id] = { on: false, points: [], polyline: null, markers: [], clickFn: null };
     map.invalidateSize();
-    fetchZoneAndBCR(id, lat, lng);
 
     // 지적도 버튼 초기 ON 표시
     var cBtn = document.getElementById('cadastral-btn-' + id);
@@ -186,96 +183,15 @@ function initLeafletMap(id, lat, lng, label) {
 }
 
 
-// ── 용도지역별 건폐율 테이블 ──────────────────────
-var ZONE_BCR = {
-  '제1종전용주거지역': 50, '제2종전용주거지역': 40,
-  '제1종일반주거지역': 60, '제2종일반주거지역': 60, '제3종일반주거지역': 50,
-  '준주거지역': 60,
-  '중심상업지역': 60, '일반상업지역': 60, '근린상업지역': 60, '유통상업지역': 60,
-  '전용공업지역': 60, '일반공업지역': 60, '준공업지역': 60,
-  '보전녹지지역': 20, '생산녹지지역': 20, '자연녹지지역': 20
-};
-
-function fetchZoneAndBCR(id, lat, lng) {
-  var KEY2 = 'CC242473-1171-3CB7-ACE2-2410141837A5';
-  var d = 0.001;
-  var url = 'https://api.vworld.kr/req/wfs?service=WFS&version=1.1.0&request=GetFeature'
-    + '&key=' + KEY2
-    + '&domain=jensurban1.github.io'
-    + '&typeName=lt_c_uq111'
-    + '&output=application/json'
-    + '&srsName=EPSG:4326'
-    + '&BBOX=' + (lng-d) + ',' + (lat-d) + ',' + (lng+d) + ',' + (lat+d);
-
-  setZoneStatus(id, '용도지역 조회 중...', false);
-
-  fetch(url)
-    .then(function(res) {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
-    .then(function(data) {
-      var features = data && data.features;
-      if (!features || features.length === 0) {
-        setZoneStatus(id, '용도지역 정보 없음', false); return;
-      }
-      // bbox 면적 가장 작은 feature 선택 (가장 세밀한 용도지역)
-      var bestZone = '', bestArea = Infinity;
-      for (var i = 0; i < features.length; i++) {
-        var name = (features[i].properties || {}).uname || '';
-        if (!name || name === 'null') continue;
-        var bbox = features[i].bbox;
-        var area = bbox ? (bbox[2]-bbox[0]) * (bbox[3]-bbox[1]) : Infinity;
-        if (area < bestArea) { bestArea = area; bestZone = name; }
-      }
-      if (!bestZone) { setZoneStatus(id, '용도지역 정보 없음', false); return; }
-
-      var bcr = ZONE_BCR[bestZone];
-      if (bcr !== undefined) {
-        document.getElementById('bcr-' + id).value = bcr;
-        setZoneStatus(id, '✓ ' + bestZone + ' → 건폐율 ' + bcr + '%', true);
-        calc(id);
-      } else {
-        setZoneStatus(id, '용도지역: ' + bestZone + ' (건폐율 직접 입력)', false);
-      }
-    })
-    .catch(function(e) {
-      // fetch 실패 시 CORS 차단 → 토지이음 링크로 안내
-      setZoneStatus(id, '용도지역 자동조회 불가 — 토지이음에서 확인 후 직접 입력해주세요.', false);
-    });
-}
-function setZoneStatus(id, msg, ok) {
-  var el = document.getElementById('zone-msg-' + id);
-  if (el) { el.textContent = msg; el.className = ok ? 'zone-msg ok' : 'zone-msg err'; }
+// ── 용도지역 드롭다운 ────────────────────────────
+var ZONE_BCR_MAP = {'50':50,'40':40,'60_1':60,'60_2':60,'50_3':50,'60_j':60,'60_cs':60,'60_cg':60,'60_cn':60,'60_cd':60,'60_ie':60,'60_ig':60,'60_is':60,'20_gb':20,'20_gp':20,'20_gn':20};
+function applyZoneBCR(id) {
+  var sel = document.getElementById('zone-sel-' + id);
+  if (!sel || !sel.value) return;
+  var bcr = ZONE_BCR_MAP[sel.value];
+  if (bcr !== undefined) { document.getElementById('bcr-' + id).value = bcr; calc(id); }
 }
 
-function toggleCadastral(id) {
-  var obj = mapObjs[id]; if (!obj) return;
-  var btn = document.getElementById('cadastral-btn-' + id);
-  if (obj.cadastralOn) {
-    obj.map.removeLayer(obj.cadastralLayer); obj.cadastralOn = false;
-    btn.classList.remove('layer-on'); btn.textContent = '지적도';
-  } else {
-    obj.cadastralLayer.addTo(obj.map); obj.cadastralOn = true;
-    btn.classList.add('layer-on'); btn.textContent = '지적도 ON';
-  }
-}
-
-function toggleSatellite(id) {
-  var obj = mapObjs[id]; if (!obj) return;
-  var btn = document.getElementById('sat-btn-' + id);
-  if (obj.satOn) {
-    obj.map.removeLayer(obj.satLayer); obj.baseLayer.addTo(obj.map);
-    if (obj.cadastralOn) { obj.map.removeLayer(obj.cadastralLayer); obj.cadastralLayer.addTo(obj.map); }
-    obj.satOn = false; btn.classList.remove('layer-on'); btn.textContent = '위성';
-  } else {
-    obj.map.removeLayer(obj.baseLayer); obj.satLayer.addTo(obj.map);
-    if (obj.cadastralOn) { obj.map.removeLayer(obj.cadastralLayer); obj.cadastralLayer.addTo(obj.map); }
-    obj.satOn = true; btn.classList.add('layer-on'); btn.textContent = '위성 ON';
-  }
-}
-
-// ── 주소 검색 ─────────────────────────────────────
 function openAddressSearch(id) {
   new daum.Postcode({
     oncomplete: function(data) {
@@ -289,7 +205,7 @@ function openAddressSearch(id) {
       msg.textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
       var eumBtn = document.getElementById('eum-btn-' + id);
       if (eumBtn) {
-        eumBtn.href = 'https://www.eum.go.kr/web/am/amSearch.jsp?address=' + encodeURIComponent(display);
+        eumBtn.href = 'https://www.eum.go.kr/web/am/amMain.jsp';
         eumBtn.className = 'eum-btn show';
       }
       var label = (data.bname || '') + ' ' + (data.jibun || '');
@@ -399,7 +315,8 @@ function addBlock() {
     +   '<div class="side-label">공통</div>'
     +   '<div class="inputs-grid">'
     +     '<div class="input-field"><label>대지면적 (㎡)</label><input type="number" id="area-' + id + '" placeholder="직접 입력" oninput="calc(' + id + ')"></div>'
-    +     '<div class="input-field"><label>건폐율 (%)</label><input type="number" id="bcr-' + id + '" value="60" oninput="calc(' + id + ')"><div class="zone-msg" id="zone-msg-' + id + '"></div></div>'
+    +     '<div class="input-field"><label>용도지역</label><select class="zone-select" id="zone-sel-' + id + '" onchange="applyZoneBCR(' + id + ')"><option value="">— 선택 —</option><option value="50">제1종전용주거 (50%)</option><option value="40">제2종전용주거 (40%)</option><option value="60_1">제1종일반주거 (60%)</option><option value="60_2">제2종일반주거 (60%)</option><option value="50_3">제3종일반주거 (50%)</option><option value="60_j">준주거 (60%)</option><option value="60_cs">중심상업 (60%)</option><option value="60_cg">일반상업 (60%)</option><option value="60_cn">근린상업 (60%)</option><option value="60_cd">유통상업 (60%)</option><option value="60_ie">전용공업 (60%)</option><option value="60_ig">일반공업 (60%)</option><option value="60_is">준공업 (60%)</option><option value="20_gb">보전녹지 (20%)</option><option value="20_gp">생산녹지 (20%)</option><option value="20_gn">자연녹지 (20%)</option></select></div>'
+    +     '<div class="input-field"><label>건폐율 (%)</label><input type="number" id="bcr-' + id + '" value="60" oninput="calc(' + id + ')"></div>'
     +     '<div class="input-field"><label>후면건축선후퇴 (m)</label><input type="number" id="rear-' + id + '" value="0" oninput="calc(' + id + ')"></div>'
     +   '</div>'
     +   '<div class="side-label">단변</div>'
