@@ -185,17 +185,35 @@ function openAddressSearch(id) {
       msg.textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
       var eumBtn = document.getElementById('eum-btn-' + id);
       var copyBtn = document.getElementById('copy-btn-' + id);
+      var seoulBtn = document.getElementById('seoul-btn-' + id);
       if (eumBtn) { eumBtn.className = 'eum-btn show'; }
       if (copyBtn) { copyBtn.className = 'eum-btn show'; copyBtn.dataset.addr = display; }
+      if (seoulBtn) { seoulBtn.className = 'eum-btn show'; }
       var label = (data.bname || '') + ' ' + (data.jibun || '');
-      // 카카오 주소검색 결과에서 좌표 직접 추출
-      var lat = parseFloat(data.y), lng = parseFloat(data.x);
-      if (lat && lng) {
-        geocodeAndShowMap(id, lat, lng, label);
-      } else {
-        // 좌표 없으면 서울 중심
-        geocodeAndShowMap(id, 37.5665, 126.9780, label);
-      }
+      // vworld 주소→좌표 변환 API
+      var vkey = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
+      var addrParam = encodeURIComponent(display);
+      fetch('https://api.vworld.kr/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=' + addrParam + '&refine=true&simple=false&format=json&type=parcel&key=' + vkey)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.response && d.response.status === 'OK') {
+            var pt = d.response.result.point;
+            geocodeAndShowMap(id, parseFloat(pt.y), parseFloat(pt.x), label);
+          } else {
+            // 지번 실패시 도로명으로 재시도
+            return fetch('https://api.vworld.kr/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=' + encodeURIComponent(data.roadAddress || display) + '&refine=true&simple=false&format=json&type=road&key=' + vkey)
+              .then(function(r2) { return r2.json(); })
+              .then(function(d2) {
+                if (d2.response && d2.response.status === 'OK') {
+                  var pt2 = d2.response.result.point;
+                  geocodeAndShowMap(id, parseFloat(pt2.y), parseFloat(pt2.x), label);
+                } else {
+                  geocodeAndShowMap(id, 37.5665, 126.9780, label);
+                }
+              });
+          }
+        })
+        .catch(function() { geocodeAndShowMap(id, 37.5665, 126.9780, label); });
     }
   }).open();
 }
@@ -344,9 +362,10 @@ function addBlock() {
     + '</div>'
     + '<div class="map-panel">'
     +   '<div class="map-wrap"><div id="map-' + id + '" class="map-placeholder">주소를 검색하면<br>지도가 표시됩니다</div></div>'
-    +   '<div style="display:flex;gap:6px;">'
+    +   '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
     +   '<button class="eum-btn" id="copy-btn-' + id + '" onclick="copyAddr(' + id + ')" style="flex:1;">주소 복사</button>'
-    +   '<a class="eum-btn" id="eum-btn-' + id + '" target="_blank" href="https://www.eum.go.kr/web/am/amMain.jsp" style="flex:2;">토지이음 열기 ↗</a>'
+    +   '<a class="eum-btn" id="eum-btn-' + id + '" target="_blank" href="https://www.eum.go.kr/web/am/amMain.jsp" style="flex:2;">토지이음 ↗</a>'
+    +   '<a class="eum-btn" id="seoul-btn-' + id + '" target="_blank" href="https://urban.seoul.go.kr/view/map/main.html" style="flex:2;">서울도시공간포털 ↗</a>'
     +   '</div>'
     +   '<div class="map-tools">'
     +     '<button class="tool-btn layer-on" id="cadastral-btn-' + id + '" onclick="toggleCadastral(' + id + ')">지적도 ON</button>'
