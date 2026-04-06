@@ -38,11 +38,10 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .remove-btn:hover { color: var(--danger); border-color: var(--danger); }
 
 .block-body { display: grid; grid-template-columns: 200px 1fr 300px; align-items: stretch; }
-.col-addr { padding: 14px; border-right: 1px solid var(--border-light); display: flex; flex-direction: column; gap: 0; }
+.col-addr { padding: 14px; border-right: 1px solid var(--border-light); display: flex; flex-direction: column; }
 .col-inputs { padding: 14px; border-right: 1px solid var(--border-light); }
 .col-map { display: flex; flex-direction: column; }
 
-/* 주소 컬럼 */
 .addr-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 6px; }
 .addr-display { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; min-height: 32px; line-height: 1.5; }
 .addr-btn { width: 100%; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--accent); border: none; border-radius: 6px; padding: 7px; cursor: pointer; margin-bottom: 6px; }
@@ -52,22 +51,20 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .ext-btn:hover { background: var(--bg); }
 .ext-btn.show, .copy-btn.show { display: block; }
 
-/* 지번→도로명 변환기 */
 .converter-wrap { border-top: 1px dashed var(--border); padding-top: 10px; margin-top: auto; }
 .converter-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 6px; }
 .converter-input-row { display: flex; gap: 4px; margin-bottom: 5px; }
-.converter-input { flex: 1; font-size: 11px; font-family: 'Noto Sans KR', sans-serif; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; outline: none; }
+.converter-input { flex: 1; font-size: 11px; font-family: 'Noto Sans KR', sans-serif; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; outline: none; min-width: 0; }
 .converter-input:focus { border-color: var(--accent); }
 .converter-btn { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--text-sub); border: none; border-radius: 6px; padding: 5px 9px; cursor: pointer; white-space: nowrap; }
 .converter-btn:hover { background: var(--text); }
-.converter-result { font-size: 10px; line-height: 1.5; padding: 6px 8px; border-radius: 5px; display: none; }
+.converter-result { font-size: 10px; line-height: 1.5; padding: 6px 8px; border-radius: 5px; word-break: break-all; display: none; }
 .converter-result.ok { background: var(--success-bg); color: var(--success); display: block; }
 .converter-result.err { background: var(--warn-bg); color: var(--warn); display: block; }
 .converter-copy { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; margin-top: 4px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; width: 100%; display: none; }
 .converter-copy.show { display: block; }
 .converter-copy:hover { background: var(--bg); }
 
-/* 입력 컬럼 */
 .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .inputs-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .input-field { display: flex; flex-direction: column; gap: 3px; }
@@ -84,7 +81,6 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .metric-value.hi { color: var(--accent); }
 .metric-unit { font-size: 9px; color: var(--text-hint); }
 
-/* 지도 */
 .map-wrap { flex: 1; }
 .map-placeholder { display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-hint); text-align: center; line-height: 1.8; background: var(--bg); height: 280px; }
 .map-tools { display: flex; gap: 5px; padding: 6px 8px; background: var(--surface); border-top: 1px solid var(--border-light); flex-wrap: wrap; }
@@ -94,7 +90,6 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .measure-result { font-size: 10px; color: var(--warn); padding: 0 8px 6px; display: none; }
 .measure-result.show { display: block; }
 
-/* 요약 */
 .summary-title { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 14px; }
 .summary-block-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .summary-block-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
@@ -150,90 +145,79 @@ var VKEY = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
 var MAP_H = 280;
 
-// ── 지번→도로명 변환 (행안부 도로명주소 API) ──────────
-// 공공데이터포털 도로명주소 API: CORS 허용, 무료, 키 불필요(공개)
-// https://www.juso.go.kr/openIndexPage.do
-var JUSO_KEY = 'devU01TX0FVVEgyMDI1MDQwNjE3MjQzMjExNTM5ODY='; // 개발용 샘플키
-
-function convertToRoad(jibun, onSuccess, onFail) {
-  // 행안부 도로명주소 검색 API
-  var url = 'https://business.juso.go.kr/addrlink/addrLinkApi.do'
-    + '?confmKey=' + JUSO_KEY
-    + '&currentPage=1&countPerPage=1'
-    + '&keyword=' + encodeURIComponent(jibun)
-    + '&resultType=json';
-
-  fetch(url)
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      var results = data && data.results && data.results.juso;
-      if (results && results.length > 0) {
-        onSuccess(results[0].roadAddr, results[0].jibunAddr);
-      } else {
-        onFail('검색 결과가 없습니다.');
-      }
-    })
-    .catch(function() {
-      // 행안부 API CORS 실패 시 Nominatim display_name으로 대체
-      fallbackNominatim(jibun, onSuccess, onFail);
-    });
-}
-
-// 행안부 API 실패 시 Nominatim으로 도로명 추출 시도
-function fallbackNominatim(jibun, onSuccess, onFail) {
+// ── Nominatim 공통 호출 ───────────────────────────────
+// [수정1] 쿼리에 "대한민국" 접두어 추가 → 한국 내 위치 우선도 향상
+// bounded=0 유지 (viewbox 밖도 탐색), accept-language ko
+function nominatimSearch(query, callback) {
+  var q = query.indexOf('대한민국') === -1 ? '대한민국 ' + query : query;
   var url = 'https://nominatim.openstreetmap.org/search'
-    + '?format=json&limit=1&countrycodes=kr&addressdetails=1'
-    + '&q=' + encodeURIComponent(jibun);
+    + '?format=json&limit=3&countrycodes=kr&addressdetails=1'
+    + '&q=' + encodeURIComponent(q);
 
-  fetch(url, { headers: { 'Accept-Language': 'ko' } })
+  fetch(url, { headers: { 'Accept-Language': 'ko', 'User-Agent': 'block-height-tool/1.0' } })
     .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data && data.length > 0) {
-        var addr = data[0].address;
-        // Nominatim address 객체에서 도로명 조합
-        var road = [
-          addr.country === '대한민국' ? '' : addr.country,
-          addr.city || addr.county || addr.state,
-          addr.suburb || addr.quarter,
-          addr.road,
-          addr.house_number
-        ].filter(Boolean).join(' ');
-        onSuccess(road || data[0].display_name, jibun);
-      } else {
-        onFail('주소를 찾을 수 없습니다.');
-      }
-    })
-    .catch(function() { onFail('변환 중 오류가 발생했습니다.'); });
+    .then(function(data) { callback(data || []); })
+    .catch(function() { callback([]); });
 }
 
-// ── Nominatim Geocoding ───────────────────────────────
-function geocodeNominatim(query, callback) {
-  var url = 'https://nominatim.openstreetmap.org/search'
-    + '?format=json&limit=1&countrycodes=kr'
-    + '&viewbox=126.7,37.4,127.2,37.7&bounded=0'
-    + '&q=' + encodeURIComponent(query);
-
-  fetch(url, { headers: { 'Accept-Language': 'ko' } })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data && data.length > 0) callback(parseFloat(data[0].lat), parseFloat(data[0].lon));
-      else callback(null, null);
-    })
-    .catch(function() { callback(null, null); });
-}
-
+// ── Geocoding (지도 위치용) ───────────────────────────
+// [수정1] 결과 중 가장 importance 높은 것 사용 (limit=3으로 받아서 필터)
 function geocode(road, jibun, onSuccess, onFail) {
-  geocodeNominatim(road, function(lat, lng) {
-    if (lat && lng) { onSuccess(lat, lng); return; }
-    geocodeNominatim(jibun, function(lat2, lng2) {
-      if (lat2 && lng2) { onSuccess(lat2, lng2); return; }
-      var parts = (road || jibun).split(' ');
-      var rough = parts.slice(0, 3).join(' ');
-      geocodeNominatim(rough, function(lat3, lng3) {
-        if (lat3 && lng3) { onSuccess(lat3, lng3); return; }
-        onFail();
-      });
+  var tries = [];
+  if (road)  tries.push(road);
+  if (jibun) tries.push(jibun);
+  // 동 단위 rough fallback
+  var base = (road || jibun || '').split(' ');
+  if (base.length > 2) tries.push(base.slice(0, 3).join(' '));
+
+  var i = 0;
+  function next() {
+    if (i >= tries.length) { onFail(); return; }
+    nominatimSearch(tries[i++], function(results) {
+      if (results.length > 0) {
+        // 한국 결과만 필터
+        var kr = results.filter(function(r) {
+          return r.address && (r.address.country_code === 'kr');
+        });
+        var best = kr.length > 0 ? kr[0] : results[0];
+        onSuccess(parseFloat(best.lat), parseFloat(best.lon));
+      } else {
+        next();
+      }
     });
+  }
+  next();
+}
+
+// ── 지번→도로명 변환 (Nominatim addressdetails 사용) ──
+// [수정2] 행안부 API 제거 → Nominatim 직접 사용
+// road, suburb, quarter, neighbourhood 필드 조합으로 도로명 구성
+function convertToRoad(jibun, onSuccess, onFail) {
+  nominatimSearch(jibun, function(results) {
+    if (!results || results.length === 0) { onFail('검색 결과가 없습니다.'); return; }
+
+    var kr = results.filter(function(r) {
+      return r.address && r.address.country_code === 'kr';
+    });
+    var item = kr.length > 0 ? kr[0] : results[0];
+    var a = item.address || {};
+
+    // 도로명 조합: 시도 + 시군구 + 도로명 + 번지
+    var parts = [];
+    if (a.city || a.province) parts.push(a.city || a.province);
+    if (a.county || a.borough) parts.push(a.county || a.borough);
+    if (a.suburb || a.quarter || a.neighbourhood) parts.push(a.suburb || a.quarter || a.neighbourhood);
+    if (a.road) parts.push(a.road);
+    if (a.house_number) parts.push(a.house_number);
+
+    var roadAddr = parts.join(' ');
+    if (roadAddr) {
+      onSuccess(roadAddr);
+    } else {
+      // 파싱 실패 시 display_name 앞부분 반환
+      var dn = item.display_name || '';
+      onSuccess(dn.split(',').slice(0, 4).join(',').trim());
+    }
   });
 }
 
@@ -245,15 +229,22 @@ function initMap(id, lat, lng, label) {
 
   var map = L.map('lmap-' + id, { center: [lat, lng], zoom: 17 });
 
+  // vworld 일반지도
   L.tileLayer(
     'https://api.vworld.kr/req/wmts/1.0.0/' + VKEY + '/Base/{z}/{y}/{x}.png',
-    { attribution: '© <a href="https://www.vworld.kr">VWorld</a>', maxZoom: 20 }
+    { attribution: '© <a href="https://www.vworld.kr">VWorld</a>', maxZoom: 19 }
   ).addTo(map);
 
+  // [수정3] 지적도 WMS maxZoom: 19 명시 → 확대 시 사라지는 문제 해결
   var cadastralLayer = L.tileLayer.wms('https://api.vworld.kr/req/wms', {
     layers: 'lt_c_landinfobasemap',
-    styles: '', format: 'image/png', transparent: true,
-    version: '1.3.0', key: VKEY, attribution: '© VWorld'
+    styles: '',
+    format: 'image/png',
+    transparent: true,
+    version: '1.3.0',
+    key: VKEY,
+    maxZoom: 19,
+    attribution: '© VWorld'
   }).addTo(map);
 
   var marker = L.marker([lat, lng]).addTo(map);
@@ -335,7 +326,7 @@ function showGeoError(id) {
     + '</div>';
 }
 
-// ── 주소 검색 (daum.Postcode) ────────────────────────
+// ── 주소 검색 ─────────────────────────────────────────
 function openAddressSearch(id) {
   new daum.Postcode({
     oncomplete: function(data) {
@@ -367,7 +358,7 @@ function openAddressSearch(id) {
 
 // ── 지번→도로명 변환 실행 ────────────────────────────
 function runConvert(id) {
-  var input = document.getElementById('conv-input-' + id);
+  var input  = document.getElementById('conv-input-' + id);
   var result = document.getElementById('conv-result-' + id);
   var copyBtn = document.getElementById('conv-copy-' + id);
   var q = input && input.value.trim();
@@ -378,9 +369,9 @@ function runConvert(id) {
   result.style.display = 'block';
   copyBtn.className = 'converter-copy';
 
-  convertToRoad(q, function(roadAddr, jibunAddr) {
+  convertToRoad(q, function(roadAddr) {
     result.className = 'converter-result ok';
-    result.textContent = '도로명: ' + roadAddr;
+    result.textContent = roadAddr;
     copyBtn.className = 'converter-copy show';
     copyBtn.onclick = function() {
       navigator.clipboard.writeText(roadAddr).then(function() {
@@ -396,7 +387,7 @@ function runConvert(id) {
     };
   }, function(errMsg) {
     result.className = 'converter-result err';
-    result.textContent = errMsg || '변환 실패';
+    result.textContent = errMsg || '변환 실패 — 시/구/동을 포함해서 입력해 보세요.';
     copyBtn.className = 'converter-copy';
   });
 }
@@ -410,7 +401,7 @@ var ZONE_BCR = {
 };
 
 function applyZoneBCR(id) {
-  var sel = document.getElementById('zone-sel-' + id);
+  var sel  = document.getElementById('zone-sel-' + id);
   var wrap = document.getElementById('bcr-wrap-' + id);
   if (!sel) return;
   if (sel.value === 'custom') { if (wrap) wrap.style.display = 'block'; return; }
@@ -421,12 +412,11 @@ function applyZoneBCR(id) {
 
 function applyCustomBCR(id) {
   var val = parseFloat(document.getElementById('bcr-custom-' + id).value) || 0;
-  document.getElementById('bcr-' + id).value = val;
-  calc(id);
+  document.getElementById('bcr-' + id).value = val; calc(id);
 }
 
 function copyAddr(id) {
-  var btn = document.getElementById('copy-btn-' + id);
+  var btn  = document.getElementById('copy-btn-' + id);
   var addr = (btn && btn.dataset.addr) || '';
   if (!addr) return;
   navigator.clipboard.writeText(addr).then(function() {
@@ -443,13 +433,9 @@ function copyAddr(id) {
 
 // ── 구역 카드 ─────────────────────────────────────────
 function addBlock() {
-  blockCount++;
-  var id = blockCount;
-  blocks.push(id);
-
+  blockCount++; var id = blockCount; blocks.push(id);
   var div = document.createElement('div');
-  div.className = 'block-card';
-  div.id = 'block-' + id;
+  div.className = 'block-card'; div.id = 'block-' + id;
   div.innerHTML =
     '<div class="block-header">'
       + '<span class="block-num">' + String(id).padStart(2,'0') + '</span>'
@@ -458,7 +444,6 @@ function addBlock() {
     + '</div>'
     + '<div class="block-body">'
 
-    // 주소 컬럼
     + '<div class="col-addr">'
       + '<div class="addr-label">위치</div>'
       + '<div class="addr-display" id="addr-display-' + id + '">—</div>'
@@ -468,7 +453,6 @@ function addBlock() {
         + '<a class="ext-btn" id="eum-btn-' + id + '" target="_blank" href="https://www.eum.go.kr/web/am/amMain.jsp">토지이음 ↗</a>'
         + '<a class="ext-btn" id="seoul-btn-' + id + '" target="_blank" href="https://urban.seoul.go.kr/view/map/main.html">서울도시공간포털 ↗</a>'
       + '</div>'
-      // 지번→도로명 변환기
       + '<div class="converter-wrap">'
         + '<div class="converter-label">지번 → 도로명</div>'
         + '<div class="converter-input-row">'
@@ -481,7 +465,6 @@ function addBlock() {
       + '</div>'
     + '</div>'
 
-    // 입력 컬럼
     + '<div class="col-inputs">'
       + '<input type="hidden" id="bcr-' + id + '" value="60">'
       + '<div class="section-label">공통</div>'
@@ -540,7 +523,6 @@ function addBlock() {
       + '</div>'
     + '</div>'
 
-    // 지도 컬럼
     + '<div class="col-map">'
       + '<div class="map-wrap" id="map-' + id + '">'
         + '<div class="map-placeholder" style="height:' + MAP_H + 'px;">주소를 검색하면<br>지도가 표시됩니다</div>'
@@ -552,7 +534,6 @@ function addBlock() {
       + '</div>'
       + '<div class="measure-result" id="measure-result-' + id + '"></div>'
     + '</div>'
-
     + '</div>';
 
   document.getElementById('blocks-container').appendChild(div);
@@ -639,7 +620,6 @@ function updateSummary() {
         + '<div class="sval">체적 <span>' + (vol > 0 ? Math.round(vol).toLocaleString() + '㎡' : '—') + '</span></div>'
       + '</div>';
     listEl.appendChild(item);
-
     if (area > 0 && minVal > 0) { tF += floor; tV += vol; valid = true; }
   });
 
