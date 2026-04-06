@@ -5,107 +5,58 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>블록별 최고높이 검토</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #f5f4f0;
-    --surface: #ffffff;
-    --border: #e0ddd6;
-    --border-light: #ece9e2;
-    --text: #1a1916;
-    --text-sub: #6b6860;
-    --text-hint: #a09e98;
-    --accent: #2d5be3;
-    --accent-bg: #eef2fd;
-    --accent-text: #1a3fa0;
-    --success: #1a7a4a;
-    --success-bg: #eaf5ee;
-    --danger: #c0392b;
-    --danger-bg: #fdecea;
-    --highlight: #f0a500;
+    --bg: #f5f4f0; --surface: #ffffff; --border: #e0ddd6; --border-light: #ece9e2;
+    --text: #1a1916; --text-sub: #6b6860; --text-hint: #a09e98;
+    --accent: #2d5be3; --accent-bg: #eef2fd; --accent-text: #1a3fa0;
+    --success: #1a7a4a; --success-bg: #eaf5ee; --danger: #c0392b;
   }
-
-  body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 0;
-  }
-
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-  }
-
+  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: baseline; gap: 16px; }
   header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
   header span { font-size: 12px; color: var(--text-hint); font-family: 'DM Mono', monospace; }
-
   .container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
-
   .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
   .top-bar-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); }
-
   .add-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--accent); background: var(--accent-bg); border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: opacity 0.15s; }
   .add-btn:hover { opacity: 0.8; }
-
   .block-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
-
   .block-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border-light); background: #faf9f7; }
-
   .block-num { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--text-hint); background: var(--border-light); border-radius: 4px; padding: 2px 8px; margin-right: 10px; }
-
-  .block-name-input { font-size: 14px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; border: none; background: transparent; color: var(--text); outline: none; width: 200px; }
+  .block-name-input { font-size: 14px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; border: none; background: transparent; color: var(--text); outline: none; width: 220px; }
   .block-name-input::placeholder { color: var(--text-hint); }
-
   .remove-btn { font-size: 12px; color: var(--text-hint); background: none; border: 1px solid var(--border); border-radius: 5px; padding: 4px 10px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
   .remove-btn:hover { color: var(--danger); border-color: var(--danger); }
-
   .block-body { padding: 18px 20px; }
   .addr-section { margin-bottom: 18px; }
   .field-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 8px; }
   .addr-row { display: flex; gap: 8px; }
-
   input[type="text"], input[type="number"] { font-family: 'Noto Sans KR', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 8px 12px; outline: none; transition: border-color 0.15s; width: 100%; }
   input[type="text"]:focus, input[type="number"]:focus { border-color: var(--accent); }
-  input.auto-filled { border-color: var(--success); background: var(--success-bg); }
-
+  input.addr-input { background: #faf9f7; cursor: pointer; }
   .lookup-btn { font-size: 13px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--accent); border: none; border-radius: 7px; padding: 8px 18px; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
   .lookup-btn:hover { opacity: 0.85; }
-  .lookup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
   .status-msg { font-size: 12px; margin-top: 6px; min-height: 18px; }
   .status-ok { color: var(--success); }
   .status-err { color: var(--danger); }
-  .status-loading { color: var(--text-hint); }
-
   .divider { border: none; border-top: 1px solid var(--border-light); margin: 16px 0; }
-
   .mode-toggle { display: flex; gap: 6px; margin-bottom: 16px; }
   .mode-btn { font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-sub); cursor: pointer; transition: all 0.15s; }
   .mode-btn.active { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); }
-
   .inputs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
   .input-field { display: flex; flex-direction: column; gap: 5px; }
   .input-field label { font-size: 11px; color: var(--text-sub); }
-  .input-field .auto-tag { display: inline-block; font-size: 9px; background: var(--success-bg); color: var(--success); border-radius: 3px; padding: 1px 4px; margin-left: 3px; vertical-align: middle; }
-
   .side-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
   .side-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
-
   .result-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-light); }
-
   .metric { background: var(--bg); border-radius: 8px; padding: 10px 12px; }
   .metric-label { font-size: 10px; color: var(--text-hint); margin-bottom: 4px; }
   .metric-value { font-size: 16px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); }
   .metric-value.highlight { color: var(--accent); }
   .metric-unit { font-size: 10px; color: var(--text-hint); margin-left: 1px; font-family: 'Noto Sans KR', sans-serif; font-weight: 400; }
-
   .summary-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 8px; }
   .summary-title { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 16px; }
   .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -114,7 +65,6 @@
   .summary-metric-value { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; }
   .summary-metric-value.big { color: var(--accent); font-size: 24px; }
   .summary-metric-unit { font-size: 11px; color: var(--text-hint); font-family: 'Noto Sans KR', sans-serif; font-weight: 400; }
-
   @media (max-width: 640px) {
     .inputs-grid { grid-template-columns: 1fr 1fr; }
     .result-strip { grid-template-columns: repeat(3, 1fr); }
@@ -136,9 +86,7 @@
     <span class="top-bar-label">구역 목록</span>
     <button class="add-btn" onclick="addBlock()">+ 구역 추가</button>
   </div>
-
   <div id="blocks-container"></div>
-
   <div class="summary-panel">
     <div class="summary-title">블록 전체 요약</div>
     <div class="summary-grid">
@@ -167,63 +115,28 @@
 </div>
 
 <script>
-const API_KEY = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 let blockCount = 0;
 let blocks = [];
 
-async function lookupAddress(id) {
-  const addr = document.getElementById('addr-' + id).value.trim();
-  if (!addr) return;
-  const msg = document.getElementById('msg-' + id);
-  const btn = document.getElementById('lookup-btn-' + id);
-  msg.className = 'status-msg status-loading';
-  msg.textContent = '주소 조회 중...';
-  btn.disabled = true;
-
-  try {
-    let point = null;
-    for (const type of ['parcel', 'road']) {
-      const url = `https://api.vworld.kr/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=${encodeURIComponent(addr)}&refine=true&simple=false&format=json&type=${type}&key=${API_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.response?.status === 'OK') { point = data.response.result.point; break; }
+function openAddressSearch(id) {
+  new daum.Postcode({
+    oncomplete: function(data) {
+      const jibun = data.jibunAddress || data.autoJibunAddress || '';
+      const road = data.roadAddress || '';
+      document.getElementById('addr-' + id).value = jibun || road;
+      const nameInput = document.getElementById('name-' + id);
+      if (!nameInput.value) nameInput.value = (data.bname || '') + ' ' + (data.jibun || '');
+      const msg = document.getElementById('msg-' + id);
+      msg.className = 'status-msg status-ok';
+      msg.textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
     }
-    if (!point) throw new Error('주소를 찾을 수 없어요. 지번 주소로 다시 시도해보세요.');
-    await fetchLandInfo(id, parseFloat(point.x), parseFloat(point.y), msg);
-  } catch(e) {
-    msg.className = 'status-msg status-err';
-    msg.textContent = e.message || '조회 실패. 주소를 확인해주세요.';
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-async function fetchLandInfo(id, lng, lat, msg) {
-  const d = 0.00008;
-  const bbox = `${lng-d},${lat-d},${lng+d},${lat+d}`;
-  const url = `https://api.vworld.kr/req/data?service=data&request=GetFeature&data=LP_PA_CBND_BUBUN&key=${API_KEY}&domain=${location.hostname}&geomFilter=BOX(${bbox})&bbox=${bbox}&maxFeatures=5&format=json&crs=EPSG:4326`;
-  const res = await fetch(url);
-  const data = await res.json();
-  const features = data?.response?.result?.featureCollection?.features;
-  if (!features?.length) throw new Error('토지정보를 찾을 수 없어요. 지번 주소로 다시 시도해보세요.');
-
-  const props = features[0].properties;
-  const area = parseFloat(props.lndpclAr || props.area || 0);
-  if (!area) throw new Error('면적 정보가 없어요. 직접 입력해주세요.');
-
-  const areaInput = document.getElementById('area-' + id);
-  areaInput.value = area.toFixed(1);
-  areaInput.classList.add('auto-filled');
-  msg.className = 'status-msg status-ok';
-  msg.textContent = `✓ 대지면적 ${area.toFixed(1)}㎡ 자동입력 완료`;
-  calc(id);
+  }).open();
 }
 
 function addBlock() {
   blockCount++;
   const id = blockCount;
   blocks.push(id);
-
   const div = document.createElement('div');
   div.className = 'block-card';
   div.id = 'block-' + id;
@@ -237,10 +150,10 @@ function addBlock() {
     </div>
     <div class="block-body">
       <div class="addr-section">
-        <div class="field-label">주소 조회</div>
+        <div class="field-label">주소 검색</div>
         <div class="addr-row">
-          <input type="text" id="addr-${id}" placeholder="예: 서울 강남구 논현동 92-2" onkeydown="if(event.key==='Enter')lookupAddress(${id})">
-          <button class="lookup-btn" id="lookup-btn-${id}" onclick="lookupAddress(${id})">조회</button>
+          <input type="text" id="addr-${id}" class="addr-input" placeholder="주소 검색 버튼을 눌러주세요" readonly onclick="openAddressSearch(${id})">
+          <button class="lookup-btn" onclick="openAddressSearch(${id})">주소 검색</button>
         </div>
         <div class="status-msg" id="msg-${id}"></div>
       </div>
@@ -250,10 +163,10 @@ function addBlock() {
         <button class="mode-btn" id="tag-both-${id}" onclick="setMode(${id},'both')">단변 + 장변</button>
       </div>
       <div class="side-label">공통</div>
-      <div class="inputs-grid" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="inputs-grid">
         <div class="input-field">
-          <label>대지면적 (㎡) <span class="auto-tag">자동</span></label>
-          <input type="number" id="area-${id}" placeholder="주소 조회 후 자동입력" oninput="calc(${id})">
+          <label>대지면적 (㎡)</label>
+          <input type="number" id="area-${id}" placeholder="직접 입력" oninput="calc(${id})">
         </div>
         <div class="input-field">
           <label>건폐율 (%)</label>
@@ -323,7 +236,6 @@ function calc(id) {
   const rear = v('rear-' + id);
   const mode = getMode(id);
   const rs = calcSide(v('road-s-' + id), v('front-s-' + id), v('width-s-' + id), rear);
-
   let minVal, dMin, dMax, dAvg;
   if (mode === 'both') {
     const rl = calcSide(v('road-l-' + id), v('front-l-' + id), v('width-l-' + id), rear);
@@ -334,13 +246,11 @@ function calc(id) {
   } else {
     minVal = rs.avgPt; dMin = rs.minPt; dMax = rs.maxPt; dAvg = rs.avgPt;
   }
-
   const floor = area * bcr;
   const vol = floor * minVal;
   const fmt = n => n > 0 ? n.toFixed(1) : '—';
   const fmt0 = n => n > 0 ? Math.round(n).toLocaleString() : '—';
   const u = s => `<span class="metric-unit">${s}</span>`;
-
   document.getElementById('r-min-' + id).innerHTML = fmt(dMin) + (dMin > 0 ? u('m') : '');
   document.getElementById('r-max-' + id).innerHTML = fmt(dMax) + (dMax > 0 ? u('m') : '');
   document.getElementById('r-avg-' + id).innerHTML = fmt(dAvg) + (dAvg > 0 ? u('m') : '');
