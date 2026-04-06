@@ -39,7 +39,7 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .block-body { display: grid; grid-template-columns: 200px 1fr 300px; align-items: stretch; }
 .col-addr { padding: 14px; border-right: 1px solid var(--border-light); }
 .col-inputs { padding: 14px; border-right: 1px solid var(--border-light); }
-.col-map { display: flex; flex-direction: column; min-height: 320px; }
+.col-map { display: flex; flex-direction: column; }
 
 .addr-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 6px; }
 .addr-display { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; min-height: 32px; line-height: 1.5; }
@@ -66,10 +66,8 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .metric-value.hi { color: var(--accent); }
 .metric-unit { font-size: 9px; color: var(--text-hint); }
 
-/* 지도: flex:1로 남은 높이 채움, min-height px 고정 */
-.map-wrap { flex: 1; min-height: 280px; position: relative; }
-.map-placeholder { width: 100%; height: 100%; min-height: 280px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-hint); text-align: center; line-height: 1.8; background: var(--bg); }
-/* Leaflet 컨테이너는 px 고정 높이 필요 — JS에서 직접 지정 */
+.map-wrap { flex: 1; }
+.map-placeholder { display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-hint); text-align: center; line-height: 1.8; background: var(--bg); height: 280px; }
 .map-tools { display: flex; gap: 5px; padding: 6px 8px; background: var(--surface); border-top: 1px solid var(--border-light); flex-wrap: wrap; }
 .tool-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; }
 .tool-btn.active { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
@@ -130,24 +128,22 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 <script>
 var VKEY = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
-var MAP_H = 280; // 지도 높이(px) — 한 곳에서 관리
+var MAP_H = 280;
 
-// ── vworld 주소→좌표 변환 ─────────────────────────────
-// fetch 직접 호출 (CORS 허용). 카카오 Geocoder 완전 대체.
-function geocodeVworld(address, callback) {
-  var url = 'https://api.vworld.kr/req/address'
-    + '?service=address&request=getcoord&version=2.0&crs=epsg:4326'
-    + '&format=json&type=both'
-    + '&address=' + encodeURIComponent(address)
-    + '&key=' + VKEY;
+// ── Nominatim Geocoding ───────────────────────────────
+// 도로명주소로 시도 → 실패시 지번주소로 재시도
+// countrycodes=kr + viewbox로 한국 우선
+function geocodeNominatim(query, callback) {
+  var url = 'https://nominatim.openstreetmap.org/search'
+    + '?format=json&limit=1&countrycodes=kr'
+    + '&viewbox=126.7,37.4,127.2,37.7&bounded=0'
+    + '&q=' + encodeURIComponent(query);
 
-  fetch(url)
+  fetch(url, { headers: { 'Accept-Language': 'ko' } })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var res = data && data.response;
-      if (res && res.status === 'OK' && res.result && res.result.point) {
-        var pt = res.result.point;
-        callback(parseFloat(pt.y), parseFloat(pt.x)); // y=위도, x=경도
+      if (data && data.length > 0) {
+        callback(parseFloat(data[0].lat), parseFloat(data[0].lon));
       } else {
         callback(null, null);
       }
@@ -155,17 +151,35 @@ function geocodeVworld(address, callback) {
     .catch(function() { callback(null, null); });
 }
 
-// ── 지도 초기화 (Leaflet + vworld) ───────────────────
+function geocode(road, jibun, onSuccess, onFail) {
+  // 1차: 도로명
+  geocodeNominatim(road, function(lat, lng) {
+    if (lat && lng) { onSuccess(lat, lng); return; }
+    // 2차: 지번
+    geocodeNominatim(jibun, function(lat2, lng2) {
+      if (lat2 && lng2) { onSuccess(lat2, lng2); return; }
+      // 3차: 시/구/동만 추출해서 재시도 (큰 단위로 fallback)
+      var parts = (road || jibun).split(' ');
+      var rough = parts.slice(0, 3).join(' '); // 예: "서울 강남구 역삼동"
+      geocodeNominatim(rough, function(lat3, lng3) {
+        if (lat3 && lng3) { onSuccess(lat3, lng3); return; }
+        onFail();
+      });
+    });
+  });
+}
+
+// ── 지도 초기화 ───────────────────────────────────────
 function initMap(id, lat, lng, label) {
   var wrap = document.getElementById('map-' + id);
   if (!wrap) return;
 
-  // Leaflet은 높이가 px로 명시된 div 필요
+  // px 고정 높이 div — Leaflet 필수
   wrap.innerHTML = '<div id="lmap-' + id + '" style="width:100%;height:' + MAP_H + 'px;"></div>';
 
   var map = L.map('lmap-' + id, { center: [lat, lng], zoom: 17 });
 
-  // vworld 일반지도
+  // vworld 일반지도 베이스
   L.tileLayer(
     'https://api.vworld.kr/req/wmts/1.0.0/' + VKEY + '/Base/{z}/{y}/{x}.png',
     { attribution: '© <a href="https://www.vworld.kr">VWorld</a>', maxZoom: 19 }
@@ -245,48 +259,6 @@ function clearMeasure(id) {
   st.points = []; st.polyline = null;
 }
 
-// ── 주소 검색 ─────────────────────────────────────────
-function openAddressSearch(id) {
-  new daum.Postcode({
-    oncomplete: function(data) {
-      var jibun = data.jibunAddress || data.autoJibunAddress || '';
-      var road  = data.roadAddress || '';
-      var display = jibun || road;
-
-      document.getElementById('addr-display-' + id).textContent = display;
-      var nm = document.getElementById('name-' + id);
-      if (nm && !nm.value) nm.value = (data.bname || '') + ' ' + (data.jibun || '');
-
-      ['eum-btn-', 'copy-btn-', 'seoul-btn-'].forEach(function(p) {
-        var el = document.getElementById(p + id); if (el) el.classList.add('show');
-      });
-      var copyBtn = document.getElementById('copy-btn-' + id);
-      if (copyBtn) copyBtn.dataset.addr = display;
-
-      var label = (data.bname || '') + ' ' + (data.jibun || '');
-
-      // 지번 → 도로명 순으로 vworld geocoding 시도
-      function tryGeocode(addr, fallback) {
-        geocodeVworld(addr, function(lat, lng) {
-          if (lat && lng) {
-            placeMap(id, lat, lng, label);
-          } else if (fallback) {
-            geocodeVworld(fallback, function(lat2, lng2) {
-              if (lat2 && lng2) placeMap(id, lat2, lng2, label);
-              else showGeoError(id);
-            });
-          } else {
-            showGeoError(id);
-          }
-        });
-      }
-
-      if (jibun) tryGeocode(jibun, road);
-      else if (road) tryGeocode(road, null);
-    }
-  }).open();
-}
-
 function placeMap(id, lat, lng, label) {
   var obj = mapObjs[id];
   if (obj && obj.map) {
@@ -301,7 +273,44 @@ function placeMap(id, lat, lng, label) {
 
 function showGeoError(id) {
   var wrap = document.getElementById('map-' + id);
-  if (wrap) wrap.innerHTML = '<div class="map-placeholder" style="min-height:' + MAP_H + 'px;">좌표를 찾을 수 없습니다.<br>지번/도로명 주소를 확인해 주세요.</div>';
+  if (wrap) wrap.innerHTML =
+    '<div class="map-placeholder" style="height:' + MAP_H + 'px;flex-direction:column;gap:8px;">'
+    + '<span>좌표를 찾을 수 없습니다.</span>'
+    + '<span style="font-size:10px;color:var(--text-hint)">도로명주소로 다시 시도해 보세요.</span>'
+    + '</div>';
+}
+
+// ── 주소 검색 ─────────────────────────────────────────
+function openAddressSearch(id) {
+  new daum.Postcode({
+    oncomplete: function(data) {
+      var road  = data.roadAddress || '';
+      var jibun = data.jibunAddress || data.autoJibunAddress || '';
+      var display = jibun || road;
+
+      document.getElementById('addr-display-' + id).textContent = display;
+      var nm = document.getElementById('name-' + id);
+      if (nm && !nm.value) nm.value = (data.bname || '') + ' ' + (data.jibun || '');
+
+      ['eum-btn-', 'copy-btn-', 'seoul-btn-'].forEach(function(p) {
+        var el = document.getElementById(p + id); if (el) el.classList.add('show');
+      });
+      var copyBtn = document.getElementById('copy-btn-' + id);
+      if (copyBtn) copyBtn.dataset.addr = display;
+
+      var label = (data.bname || '') + ' ' + (data.jibun || '');
+
+      // 로딩 표시
+      var wrap = document.getElementById('map-' + id);
+      if (wrap) wrap.innerHTML =
+        '<div class="map-placeholder" style="height:' + MAP_H + 'px;">좌표 검색 중...</div>';
+
+      geocode(road, jibun,
+        function(lat, lng) { placeMap(id, lat, lng, label); },
+        function() { showGeoError(id); }
+      );
+    }
+  }).open();
 }
 
 // ── 용도지역 → 건폐율 ────────────────────────────────
@@ -432,7 +441,7 @@ function addBlock() {
 
     + '<div class="col-map">'
       + '<div class="map-wrap" id="map-' + id + '">'
-        + '<div class="map-placeholder" style="min-height:' + MAP_H + 'px;">주소를 검색하면<br>지도가 표시됩니다</div>'
+        + '<div class="map-placeholder" style="height:' + MAP_H + 'px;">주소를 검색하면<br>지도가 표시됩니다</div>'
       + '</div>'
       + '<div class="map-tools">'
         + '<button class="tool-btn layer-on" id="cadastral-btn-' + id + '">지적도 ON</button>'
