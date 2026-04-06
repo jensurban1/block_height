@@ -6,7 +6,6 @@
 <title>블록별 최고높이 검토</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=ebf29618bc5743df48670ec978adc168&libraries=services"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -14,6 +13,7 @@
     --text: #1a1916; --text-sub: #6b6860; --text-hint: #a09e98;
     --accent: #2d5be3; --accent-bg: #eef2fd; --accent-text: #1a3fa0;
     --success: #1a7a4a; --success-bg: #eaf5ee; --danger: #c0392b;
+    --warn: #b45309; --warn-bg: #fef3c7;
   }
   body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
   header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; display: flex; align-items: baseline; gap: 16px; }
@@ -22,23 +22,30 @@
   .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
   .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
   .top-bar-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); }
-  .add-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--accent); background: var(--accent-bg); border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: opacity 0.15s; }
+  .add-btn { font-size: 13px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--accent); background: var(--accent-bg); border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; transition: opacity 0.15s; }
   .add-btn:hover { opacity: 0.8; }
   .block-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
   .block-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border-light); background: #faf9f7; }
-  .block-num { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--text-hint); background: var(--border-light); border-radius: 4px; padding: 2px 8px; margin-right: 10px; }
+  .block-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); background: var(--border-light); border-radius: 4px; padding: 2px 8px; margin-right: 10px; }
   .block-name-input { font-size: 14px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; border: none; background: transparent; color: var(--text); outline: none; width: 220px; }
   .block-name-input::placeholder { color: var(--text-hint); }
   .remove-btn { font-size: 12px; color: var(--text-hint); background: none; border: 1px solid var(--border); border-radius: 5px; padding: 4px 10px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
   .remove-btn:hover { color: var(--danger); border-color: var(--danger); }
   .block-body { padding: 18px 20px; }
-
-  /* 2컬럼 레이아웃: 입력 | 지도 */
-  .block-layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
+  .block-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
   .block-inputs { min-width: 0; }
-  .map-panel { border-radius: 8px; overflow: hidden; border: 1px solid var(--border-light); background: var(--bg); display: flex; flex-direction: column; }
-  .map-placeholder { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-hint); min-height: 220px; text-align: center; line-height: 1.6; }
-  .kakao-map { width: 100%; height: 100%; min-height: 220px; }
+
+  /* 지도 패널 */
+  .map-panel { display: flex; flex-direction: column; gap: 8px; }
+  .map-wrap { border-radius: 8px; overflow: hidden; border: 1px solid var(--border-light); position: relative; height: 260px; background: var(--bg); }
+  .map-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-hint); text-align: center; line-height: 1.8; }
+  .kakao-map { width: 100%; height: 100%; }
+  .map-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tool-btn { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; transition: all 0.15s; }
+  .tool-btn:hover { background: var(--bg); }
+  .tool-btn.active { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
+  .measure-result { font-size: 12px; color: var(--warn); background: var(--warn-bg); border-radius: 5px; padding: 6px 10px; display: none; }
+  .measure-result.show { display: block; }
 
   .addr-section { margin-bottom: 18px; }
   .field-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 8px; }
@@ -46,13 +53,10 @@
   input[type="text"], input[type="number"] { font-family: 'Noto Sans KR', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 8px 12px; outline: none; transition: border-color 0.15s; width: 100%; }
   input[type="text"]:focus, input[type="number"]:focus { border-color: var(--accent); }
   input.addr-input { background: #faf9f7; cursor: pointer; }
-  input.auto-filled { border-color: var(--success) !important; background: var(--success-bg) !important; }
-  .lookup-btn { font-size: 13px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--accent); border: none; border-radius: 7px; padding: 8px 18px; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
+  .lookup-btn { font-size: 13px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--accent); border: none; border-radius: 7px; padding: 8px 18px; cursor: pointer; white-space: nowrap; }
   .lookup-btn:hover { opacity: 0.85; }
   .status-msg { font-size: 12px; margin-top: 6px; min-height: 18px; }
   .status-ok { color: var(--success); }
-  .status-err { color: var(--danger); }
-  .status-loading { color: var(--text-hint); }
   .divider { border: none; border-top: 1px solid var(--border-light); margin: 16px 0; }
   .mode-toggle { display: flex; gap: 6px; margin-bottom: 16px; }
   .mode-btn { font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-sub); cursor: pointer; transition: all 0.15s; }
@@ -60,7 +64,6 @@
   .inputs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
   .input-field { display: flex; flex-direction: column; gap: 5px; }
   .input-field label { font-size: 11px; color: var(--text-sub); }
-  .auto-tag { display: inline-block; font-size: 9px; background: var(--success-bg); color: var(--success); border-radius: 3px; padding: 1px 4px; margin-left: 3px; vertical-align: middle; }
   .side-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
   .side-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
   .result-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-light); }
@@ -76,10 +79,9 @@
   .summary-metric-label { font-size: 11px; color: var(--text-sub); margin-bottom: 6px; }
   .summary-metric-value { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; }
   .summary-metric-value.big { color: var(--accent); font-size: 24px; }
-  .summary-metric-unit { font-size: 11px; color: var(--text-hint); font-family: 'Noto Sans KR', sans-serif; font-weight: 400; }
+  .summary-metric-unit { font-size: 11px; color: var(--text-hint); font-family: 'Noto Sans KR', sans-serif; }
   @media (max-width: 700px) {
     .block-layout { grid-template-columns: 1fr; }
-    .map-panel { min-height: 200px; }
     .inputs-grid { grid-template-columns: 1fr 1fr; }
     .result-strip { grid-template-columns: repeat(3, 1fr); }
     .summary-grid { grid-template-columns: 1fr 1fr; }
@@ -104,26 +106,10 @@
   <div class="summary-panel">
     <div class="summary-title">블록 전체 요약</div>
     <div class="summary-grid">
-      <div class="summary-metric">
-        <div class="summary-metric-label">총 대지면적</div>
-        <div class="summary-metric-value" id="sum-area">—</div>
-        <div class="summary-metric-unit">㎡</div>
-      </div>
-      <div class="summary-metric">
-        <div class="summary-metric-label">총 건물바닥면적</div>
-        <div class="summary-metric-value" id="sum-floor">—</div>
-        <div class="summary-metric-unit">㎡</div>
-      </div>
-      <div class="summary-metric">
-        <div class="summary-metric-label">총 체적</div>
-        <div class="summary-metric-value" id="sum-vol">—</div>
-        <div class="summary-metric-unit">㎡</div>
-      </div>
-      <div class="summary-metric">
-        <div class="summary-metric-label">블록평균높이</div>
-        <div class="summary-metric-value big" id="avg-height">—</div>
-        <div class="summary-metric-unit">m</div>
-      </div>
+      <div class="summary-metric"><div class="summary-metric-label">총 대지면적</div><div class="summary-metric-value" id="sum-area">—</div><div class="summary-metric-unit">㎡</div></div>
+      <div class="summary-metric"><div class="summary-metric-label">총 건물바닥면적</div><div class="summary-metric-value" id="sum-floor">—</div><div class="summary-metric-unit">㎡</div></div>
+      <div class="summary-metric"><div class="summary-metric-label">총 체적</div><div class="summary-metric-value" id="sum-vol">—</div><div class="summary-metric-unit">㎡</div></div>
+      <div class="summary-metric"><div class="summary-metric-label">블록평균높이</div><div class="summary-metric-value big" id="avg-height">—</div><div class="summary-metric-unit">m</div></div>
     </div>
   </div>
 </div>
@@ -131,26 +117,121 @@
 <script>
 let blockCount = 0;
 let blocks = [];
-let maps = {};
-let markers = {};
+let mapObjs = {};       // kakao map instances
+let measureState = {};  // 거리재기 상태
 
-function showMap(id, lat, lng, addr) {
+// 카카오 지도 SDK 동적 로딩 (services 포함)
+function loadKakaoMap(callback) {
+  if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+    callback(); return;
+  }
+  const script = document.createElement('script');
+  script.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=ebf29618bc5743df48670ec978adc168&libraries=services&autoload=false';
+  script.onload = function() {
+    kakao.maps.load(callback);
+  };
+  document.head.appendChild(script);
+}
+
+function initMap(id, lat, lng, label) {
   const container = document.getElementById('map-' + id);
   if (!container) return;
   container.innerHTML = '';
   container.className = 'kakao-map';
 
   const coords = new kakao.maps.LatLng(lat, lng);
-  const map = new kakao.maps.Map(container, { center: coords, level: 4 });
+  const map = new kakao.maps.Map(container, { center: coords, level: 3 });
 
+  // 지도 타입 컨트롤
+  map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
+  map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+
+  // 마커 + 말풍선
   const marker = new kakao.maps.Marker({ map, position: coords });
-  const infowindow = new kakao.maps.InfoWindow({
-    content: `<div style="padding:6px 10px;font-size:12px;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">${addr}</div>`
+  const iw = new kakao.maps.InfoWindow({
+    content: `<div style="padding:5px 9px;font-size:11px;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">${label}</div>`
   });
-  infowindow.open(map, marker);
+  iw.open(map, marker);
 
-  maps[id] = map;
-  markers[id] = marker;
+  mapObjs[id] = { map, marker, polylines: [], dots: [], measuring: false };
+  measureState[id] = { on: false, points: [], polyline: null, dots: [] };
+}
+
+function toggleMeasure(id) {
+  if (!mapObjs[id]) return;
+  const state = measureState[id];
+  const btn = document.getElementById('measure-btn-' + id);
+  const resultEl = document.getElementById('measure-result-' + id);
+
+  if (state.on) {
+    // 측정 종료
+    state.on = false;
+    btn.classList.remove('active');
+    btn.textContent = '거리재기';
+    kakao.maps.event.removeListener(mapObjs[id].map, 'click', state.clickHandler);
+  } else {
+    // 측정 시작 - 초기화
+    state.on = true;
+    state.points = [];
+    btn.classList.add('active');
+    btn.textContent = '측정 종료';
+    resultEl.className = 'measure-result';
+    resultEl.textContent = '';
+
+    // 이전 그린 것 제거
+    if (state.polyline) state.polyline.setMap(null);
+    state.dots.forEach(d => d.setMap(null));
+    state.polyline = null;
+    state.dots = [];
+
+    state.clickHandler = function(mouseEvent) {
+      const latlng = mouseEvent.latLng;
+      state.points.push(latlng);
+
+      // 점 표시
+      const dot = new kakao.maps.Circle({
+        map: mapObjs[id].map,
+        center: latlng,
+        radius: 3,
+        strokeWeight: 1,
+        strokeColor: '#b45309',
+        strokeOpacity: 1,
+        fillColor: '#b45309',
+        fillOpacity: 1
+      });
+      state.dots.push(dot);
+
+      // 선 그리기
+      if (state.polyline) state.polyline.setMap(null);
+      if (state.points.length >= 2) {
+        state.polyline = new kakao.maps.Polyline({
+          map: mapObjs[id].map,
+          path: state.points,
+          strokeWeight: 2,
+          strokeColor: '#b45309',
+          strokeOpacity: 0.9,
+          strokeStyle: 'solid'
+        });
+        const dist = state.polyline.getLength();
+        resultEl.className = 'measure-result show';
+        resultEl.textContent = `총 거리: ${dist.toFixed(1)} m`;
+      }
+    };
+
+    kakao.maps.event.addListener(mapObjs[id].map, 'click', state.clickHandler);
+  }
+}
+
+function resetMeasure(id) {
+  if (!mapObjs[id]) return;
+  const state = measureState[id];
+  if (state.on) toggleMeasure(id);
+  if (state.polyline) state.polyline.setMap(null);
+  state.dots.forEach(d => d.setMap(null));
+  state.points = [];
+  state.polyline = null;
+  state.dots = [];
+  document.getElementById('measure-result-' + id).className = 'measure-result';
 }
 
 function openAddressSearch(id) {
@@ -159,22 +240,19 @@ function openAddressSearch(id) {
       const jibun = data.jibunAddress || data.autoJibunAddress || '';
       const display = jibun || data.roadAddress;
       document.getElementById('addr-' + id).value = display;
-
       const nameInput = document.getElementById('name-' + id);
       if (!nameInput.value) nameInput.value = (data.bname || '') + ' ' + (data.jibun || '');
+      document.getElementById('msg-' + id).className = 'status-msg status-ok';
+      document.getElementById('msg-' + id).textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
 
-      const msg = document.getElementById('msg-' + id);
-      msg.className = 'status-msg status-ok';
-      msg.textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
-
-      // 카카오 geocoder로 좌표 변환 → 지도 표시
-      const geocoder = new kakao.maps.services.Geocoder();
-      geocoder.addressSearch(display, function(result, status) {
-        if (status === kakao.maps.services.Status.OK) {
-          const lat = parseFloat(result[0].y);
-          const lng = parseFloat(result[0].x);
-          showMap(id, lat, lng, data.bname + ' ' + (data.jibun || ''));
-        }
+      loadKakaoMap(function() {
+        const geocoder = new kakao.maps.services.Geocoder();
+        geocoder.addressSearch(display, function(result, status) {
+          if (status === kakao.maps.services.Status.OK) {
+            initMap(id, parseFloat(result[0].y), parseFloat(result[0].x),
+              (data.bname || '') + ' ' + (data.jibun || ''));
+          }
+        });
       });
     }
   }).open();
@@ -213,18 +291,9 @@ function addBlock() {
           </div>
           <div class="side-label">공통</div>
           <div class="inputs-grid">
-            <div class="input-field">
-              <label>대지면적 (㎡)</label>
-              <input type="number" id="area-${id}" placeholder="직접 입력" oninput="calc(${id})">
-            </div>
-            <div class="input-field">
-              <label>건폐율 (%)</label>
-              <input type="number" id="bcr-${id}" value="60" oninput="calc(${id})">
-            </div>
-            <div class="input-field">
-              <label>후면건축선후퇴 (m)</label>
-              <input type="number" id="rear-${id}" value="0" oninput="calc(${id})">
-            </div>
+            <div class="input-field"><label>대지면적 (㎡)</label><input type="number" id="area-${id}" placeholder="직접 입력" oninput="calc(${id})"></div>
+            <div class="input-field"><label>건폐율 (%)</label><input type="number" id="bcr-${id}" value="60" oninput="calc(${id})"></div>
+            <div class="input-field"><label>후면건축선후퇴 (m)</label><input type="number" id="rear-${id}" value="0" oninput="calc(${id})"></div>
           </div>
           <div class="side-label">단변</div>
           <div class="inputs-grid">
@@ -250,7 +319,14 @@ function addBlock() {
           </div>
         </div>
         <div class="map-panel">
-          <div id="map-${id}" class="map-placeholder">주소를 검색하면<br>지도가 표시됩니다</div>
+          <div class="map-wrap">
+            <div id="map-${id}" class="map-placeholder">주소를 검색하면<br>지도가 표시됩니다</div>
+          </div>
+          <div class="map-tools">
+            <button class="tool-btn" id="measure-btn-${id}" onclick="toggleMeasure(${id})">거리재기</button>
+            <button class="tool-btn" onclick="resetMeasure(${id})">초기화</button>
+          </div>
+          <div class="measure-result" id="measure-result-${id}"></div>
         </div>
       </div>
     </div>
@@ -260,8 +336,9 @@ function addBlock() {
 
 function removeBlock(id) {
   blocks = blocks.filter(b => b !== id);
-  delete maps[id];
-  delete markers[id];
+  if (measureState[id]?.on) toggleMeasure(id);
+  delete mapObjs[id];
+  delete measureState[id];
   document.getElementById('block-' + id)?.remove();
   updateSummary();
 }
@@ -295,10 +372,8 @@ function calc(id) {
   let minVal, dMin, dMax, dAvg;
   if (mode === 'both') {
     const rl = calcSide(v('road-l-' + id), v('front-l-' + id), v('width-l-' + id), rear);
-    minVal = Math.min(rs.avgPt, rl.avgPt);
-    dMin = Math.min(rs.minPt, rl.minPt);
-    dMax = Math.max(rs.maxPt, rl.maxPt);
-    dAvg = (rs.avgPt + rl.avgPt) / 2;
+    minVal = Math.min(rs.avgPt, rl.avgPt); dMin = Math.min(rs.minPt, rl.minPt);
+    dMax = Math.max(rs.maxPt, rl.maxPt); dAvg = (rs.avgPt + rl.avgPt) / 2;
   } else {
     minVal = rs.avgPt; dMin = rs.minPt; dMax = rs.maxPt; dAvg = rs.avgPt;
   }
@@ -319,17 +394,14 @@ function calc(id) {
 function updateSummary() {
   let tA = 0, tF = 0, tV = 0, valid = false;
   blocks.forEach(id => {
-    const area = v('area-' + id);
-    const bcr = v('bcr-' + id) / 100;
-    const rear = v('rear-' + id);
+    const area = v('area-' + id); const bcr = v('bcr-' + id) / 100; const rear = v('rear-' + id);
     const rs = calcSide(v('road-s-' + id), v('front-s-' + id), v('width-s-' + id), rear);
     let minVal = rs.avgPt;
     if (getMode(id) === 'both') {
       const rl = calcSide(v('road-l-' + id), v('front-l-' + id), v('width-l-' + id), rear);
       minVal = Math.min(rs.avgPt, rl.avgPt);
     }
-    const f = area * bcr;
-    const vol = f * minVal;
+    const f = area * bcr; const vol = f * minVal;
     if (area > 0 && minVal > 0) { tA += area; tF += f; tV += vol; valid = true; }
   });
   const avgH = tF > 0 ? tV / tF : 0;
