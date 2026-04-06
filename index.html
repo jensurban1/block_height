@@ -56,9 +56,6 @@
   .status-msg { font-size: 12px; margin-top: 6px; min-height: 18px; }
   .status-ok { color: var(--success); }
   .divider { border: none; border-top: 1px solid var(--border-light); margin: 16px 0; }
-  .mode-toggle { display: flex; gap: 6px; margin-bottom: 16px; }
-  .mode-btn { font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-sub); cursor: pointer; }
-  .mode-btn.active { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); }
   .inputs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
   .input-field { display: flex; flex-direction: column; gap: 5px; }
   .input-field label { font-size: 11px; color: var(--text-sub); }
@@ -119,26 +116,9 @@
 <script>
 var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
 
-// ── Nominatim으로 주소 → 좌표 변환 ────────────────
-function geocodeAndShowMap(id, address, label) {
-  var url = 'https://nominatim.openstreetmap.org/search?format=json&q='
-    + encodeURIComponent(address) + '&limit=1&accept-language=ko';
-  fetch(url)
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (!data || data.length === 0) {
-        // Nominatim 실패시 카카오 geocoder로 좌표만 받아서 지도 표시
-        showMapFallback(id, label);
-        return;
-      }
-      initLeafletMap(id, parseFloat(data[0].lat), parseFloat(data[0].lon), label);
-    })
-    .catch(function() { showMapFallback(id, label); });
-}
-
-function showMapFallback(id, label) {
-  // 서울 중심으로 기본 지도 표시
-  initLeafletMap(id, 37.5665, 126.9780, label);
+// ── 좌표 직접 받아서 지도 표시 (카카오 주소검색 결과 활용) ──
+function geocodeAndShowMap(id, lat, lng, label) {
+  initLeafletMap(id, lat, lng, label);
 }
 
 // ── Leaflet 지도 초기화 ────────────────────────────
@@ -208,7 +188,14 @@ function openAddressSearch(id) {
       if (eumBtn) { eumBtn.className = 'eum-btn show'; }
       if (copyBtn) { copyBtn.className = 'eum-btn show'; copyBtn.dataset.addr = display; }
       var label = (data.bname || '') + ' ' + (data.jibun || '');
-      geocodeAndShowMap(id, display, label);
+      // 카카오 주소검색 결과에서 좌표 직접 추출
+      var lat = parseFloat(data.y), lng = parseFloat(data.x);
+      if (lat && lng) {
+        geocodeAndShowMap(id, lat, lng, label);
+      } else {
+        // 좌표 없으면 서울 중심
+        geocodeAndShowMap(id, 37.5665, 126.9780, label);
+      }
     }
   }).open();
 }
@@ -324,10 +311,7 @@ function addBlock() {
     +     '<div class="status-msg" id="msg-' + id + '"></div>'
     +   '</div>'
     +   '<hr class="divider">'
-    +   '<div class="mode-toggle">'
-    +     '<button class="mode-btn active" id="tag-single-' + id + '" onclick="setMode(' + id + ',\'single\')">단변만</button>'
-    +     '<button class="mode-btn" id="tag-both-' + id + '" onclick="setMode(' + id + ',\'both\')">단변 + 장변</button>'
-    +   '</div>'
+
     +   '<div class="side-label">공통</div>'
     +   '<div class="inputs-grid">'
     +     '<div class="input-field"><label>대지면적 (㎡)</label><input type="number" id="area-' + id + '" placeholder="직접 입력" oninput="calc(' + id + ')"></div>'
@@ -341,7 +325,7 @@ function addBlock() {
     +     '<div class="input-field"><label>전면건축선후퇴 (m)</label><input type="number" id="front-s-' + id + '" value="3" oninput="calc(' + id + ')"></div>'
     +     '<div class="input-field"><label>획지폭 (m)</label><input type="number" id="width-s-' + id + '" placeholder="예: 24.6" oninput="calc(' + id + ')"></div>'
     +   '</div>'
-    +   '<div id="longside-' + id + '" style="display:none;">'
+    +   '<div id="longside-' + id + '">'
     +     '<div class="side-label">장변</div>'
     +     '<div class="inputs-grid">'
     +       '<div class="input-field"><label>전면도로폭 (m)</label><input type="number" id="road-l-' + id + '" placeholder="예: 50" oninput="calc(' + id + ')"></div>'
@@ -386,13 +370,8 @@ function removeBlock(id) {
   updateSummary();
 }
 
-function setMode(id, mode) {
-  document.getElementById('tag-single-' + id).className = 'mode-btn' + (mode === 'single' ? ' active' : '');
-  document.getElementById('tag-both-' + id).className = 'mode-btn' + (mode === 'both' ? ' active' : '');
-  document.getElementById('longside-' + id).style.display = mode === 'both' ? 'block' : 'none';
-  calc(id);
-}
-function getMode(id) { return document.getElementById('tag-both-' + id).classList.contains('active') ? 'both' : 'single'; }
+function setMode(id, mode) { calc(id); }
+function getMode(id) { return 'both'; }
 function v(eid) { var el = document.getElementById(eid); return el ? parseFloat(el.value) || 0 : 0; }
 function calcSide(road, front, width, rear) {
   var d = width - front, mn = (road + front) * 1.5, mx = (road + front + d - rear) * 1.5;
