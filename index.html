@@ -279,22 +279,25 @@ function openAddressSearch(id) {
       var label = (data.bname || '') + ' ' + (data.jibun || '');
 
       // 카카오 Geocoder로 좌표 변환
-      function geocode() {
-        var gc = new kakao.maps.services.Geocoder();
-        // 지번 주소로 먼저 시도
-        gc.addressSearch(jibun || data.roadAddress, function(result, status) {
-          if (status === kakao.maps.services.Status.OK) {
-            initMap(id, parseFloat(result[0].y), parseFloat(result[0].x), label);
-          } else if (data.roadAddress) {
-            // 도로명으로 재시도
-            gc.addressSearch(data.roadAddress, function(r2, s2) {
-              if (s2 === kakao.maps.services.Status.OK) {
-                initMap(id, parseFloat(r2[0].y), parseFloat(r2[0].x), label);
-              }
-            });
-          }
-        });
+  function geocode() {
+  var gc = new kakao.maps.services.Geocoder();
+  var tries = [];
+  if (jibun) tries.push(jibun);
+  if (data.roadAddress) tries.push(data.roadAddress);
+  if (!tries.length) return;
+
+  function tryNext(i) {
+    if (i >= tries.length) return;
+    gc.addressSearch(tries[i], function(result, status) {
+      if (status === kakao.maps.services.Status.OK && result.length > 0) {
+        initMap(id, parseFloat(result[0].y), parseFloat(result[0].x), label);
+      } else {
+        tryNext(i + 1);
       }
+    });
+  }
+  tryNext(0);
+}
 
       if (kakaoReady) {
         geocode();
