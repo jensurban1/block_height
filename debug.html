@@ -197,20 +197,26 @@ var ZONE_BCR = {
 };
 
 function fetchZoneAndBCR(id, lat, lng) {
-  var KEY2 = 'CC242473-1171-3CB7-ACE2-2410141837A5';
+  // 토지이용규제정보 LURIS API - 좌표로 용도지역 직접 조회
   var cbName = '_zoneCb' + Date.now();
-  var url = 'https://api.vworld.kr/req/data?service=data&version=2.0&request=GetFeature'
+  // epsg:4326 좌표를 epsg:5179(TM)로 변환 필요 → vworld coordinate 변환 API 사용
+  // 방법: vworld addr API로 좌표→주소→PNU, 그 후 LURIS 조회
+
+  // 실용적 대안: vworld LT_C_UQ111 레이어 WFS (용도지역지구도)
+  var KEY2 = 'CC242473-1171-3CB7-ACE2-2410141837A5';
+  var url = 'https://api.vworld.kr/req/wfs?'
+    + 'service=WFS&version=1.1.0&request=GetFeature'
     + '&key=' + KEY2
     + '&domain=jensurban1.github.io'
-    + '&data=LT_C_UQ113'
-    + '&geometry=false'
-    + '&attribute=true'
-    + '&geomfilter=POINT(' + lng + ' ' + lat + ')'
-    + '&format=json'
+    + '&typeName=lt_c_uq111'
+    + '&output=application/json'
+    + '&srsName=EPSG:4326'
+    + '&BBOX=' + (lng-0.001) + ',' + (lat-0.001) + ',' + (lng+0.001) + ',' + (lat+0.001)
     + '&callback=' + cbName;
 
   var script = document.createElement('script');
   script.src = url;
+  console.log('[용도지역 WFS URL]', url);
 
   var timer = setTimeout(function() {
     delete window[cbName];
@@ -222,30 +228,28 @@ function fetchZoneAndBCR(id, lat, lng) {
     clearTimeout(timer);
     delete window[cbName];
     if (script.parentNode) script.parentNode.removeChild(script);
+    console.log('[용도지역 WFS 응답]', JSON.stringify(data).slice(0, 500));
     try {
-      var features = data && data.response && data.response.result
-        && data.response.result.featureCollection
-        && data.response.result.featureCollection.features;
+      var features = data && data.features;
       if (!features || features.length === 0) {
         setZoneStatus(id, '용도지역 정보 없음', false); return;
       }
-      var props = features[0].properties;
-      console.log('[용도지역 WFS] properties:', JSON.stringify(props));
-      // LT_C_UQ113 주요 키 시도
-      var zoneName = props.uq113 || props.UQ113
-        || props.prpos_area_dstrc_nm || props.PRPOS_AREA_DSTRC_NM
-        || props.uname || props.UNAME
-        || props.jiyuk_nm || props.JIYUK_NM
-        || props.prpos_nm || props.PRPOS_NM
-        || '';
-      // 그래도 없으면 '지역' 포함 값 자동 탐색
-      if (!zoneName) {
-        for (var k in props) {
-          if (props[k] && typeof props[k] === 'string' && props[k].indexOf('지역') > -1) {
-            zoneName = props[k]; break;
+      var zoneName = '';
+      for (var i = 0; i < features.length; i++) {
+        var p = features[i].properties || {};
+        var candidate = p.uname || p.UNAME || p.prpos_area_dstrc_nm || p.prpos_area1 || '';
+        if (!candidate) {
+          for (var k in p) {
+            var v = p[k];
+            if (v && typeof v === 'string' && v.length > 2 &&
+                (v.indexOf('지역') > -1 || v.indexOf('지구') > -1)) {
+              candidate = v; break;
+            }
           }
         }
+        if (candidate) { zoneName = candidate; break; }
       }
+      console.log('[용도지역] 추출값:', zoneName, '| 전체 props:', JSON.stringify(features[0].properties));
       var bcr = ZONE_BCR[zoneName];
       if (bcr !== undefined) {
         document.getElementById('bcr-' + id).value = bcr;
@@ -255,6 +259,7 @@ function fetchZoneAndBCR(id, lat, lng) {
         setZoneStatus(id, '용도지역: ' + (zoneName || '알 수 없음') + ' (건폐율 직접 입력)', false);
       }
     } catch(e) {
+      console.log('[용도지역] 파싱 오류:', e);
       setZoneStatus(id, '용도지역 파싱 오류', false);
     }
   };
@@ -264,7 +269,6 @@ function fetchZoneAndBCR(id, lat, lng) {
   };
   document.body.appendChild(script);
 }
-
 function setZoneStatus(id, msg, ok) {
   var el = document.getElementById('zone-msg-' + id);
   if (el) { el.textContent = msg; el.className = ok ? 'zone-msg ok' : 'zone-msg err'; }
