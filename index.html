@@ -14,24 +14,21 @@
   --bg: #f4f3ef; --surface: #fff; --border: #e0ddd6; --border-light: #ece9e2;
   --text: #1a1916; --text-sub: #6b6860; --text-hint: #a09e98;
   --accent: #2d5be3; --accent-bg: #eef2fd; --accent-text: #1a3fa0;
-  --success: #1a7a4a; --success-bg: #eaf5ee; --danger: #c0392b;
-  --warn: #b45309; --warn-bg: #fef3c7;
+  --danger: #c0392b; --warn: #b45309; --warn-bg: #fef3c7;
 }
 body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* ── 헤더 ── */
 header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
 header h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
 header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', monospace; }
 .add-btn { font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--accent); background: var(--accent-bg); border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
 .add-btn:hover { opacity: 0.8; }
 
-/* ── 메인 레이아웃: 좌(블록 목록) + 우(요약) ── */
-.layout { display: grid; grid-template-columns: 1fr 280px; gap: 0; min-height: calc(100vh - 53px); }
+.layout { display: grid; grid-template-columns: 1fr 280px; min-height: calc(100vh - 53px); }
 .blocks-col { padding: 20px; border-right: 1px solid var(--border); overflow-y: auto; }
 .summary-col { padding: 20px; position: sticky; top: 53px; height: calc(100vh - 53px); overflow-y: auto; }
 
-/* ── 블록 카드: 수평 레이아웃 ── */
+/* 블록 카드 */
 .block-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
 .block-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #faf9f7; border-bottom: 1px solid var(--border-light); }
 .block-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-hint); background: var(--border-light); border-radius: 3px; padding: 2px 7px; margin-right: 8px; }
@@ -40,13 +37,13 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .remove-btn { font-size: 11px; color: var(--text-hint); background: none; border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .remove-btn:hover { color: var(--danger); border-color: var(--danger); }
 
-/* ── 블록 본문: 3단 그리드 ── */
-.block-body { display: grid; grid-template-columns: 200px 1fr 260px; gap: 0; }
+/* 3단 본문 */
+.block-body { display: grid; grid-template-columns: 200px 1fr 300px; }
 .col-addr { padding: 14px; border-right: 1px solid var(--border-light); }
 .col-inputs { padding: 14px; border-right: 1px solid var(--border-light); }
-.col-map { padding: 0; display: flex; flex-direction: column; }
+.col-map { display: flex; flex-direction: column; }
 
-/* ── 주소 컬럼 ── */
+/* 주소 */
 .addr-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 6px; }
 .addr-display { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; min-height: 32px; line-height: 1.5; }
 .addr-btn { width: 100%; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--accent); border: none; border-radius: 6px; padding: 7px; cursor: pointer; margin-bottom: 6px; }
@@ -54,20 +51,19 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .ext-btns { display: flex; flex-direction: column; gap: 4px; }
 .ext-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; text-decoration: none; text-align: center; display: none; }
 .ext-btn:hover { background: var(--bg); }
-.ext-btn.show { display: block; }
-.copy-btn.show { display: block; }
+.ext-btn.show, .copy-btn.show { display: block; }
 
-/* ── 입력 컬럼 ── */
+/* 입력 */
 .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .inputs-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .input-field { display: flex; flex-direction: column; gap: 3px; }
 .input-field label { font-size: 10px; color: var(--text-sub); }
 input[type="number"], select { font-family: 'Noto Sans KR', sans-serif; font-size: 12px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; outline: none; width: 100%; transition: border-color 0.15s; }
 input[type="number"]:focus, select:focus { border-color: var(--accent); }
-.section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 6px; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin: 6px 0; display: flex; align-items: center; gap: 6px; }
 .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
 
-/* ── 결과 스트립 ── */
+/* 결과 */
 .result-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-light); }
 .metric { background: var(--bg); border-radius: 6px; padding: 7px 8px; }
 .metric-label { font-size: 9px; color: var(--text-hint); margin-bottom: 2px; }
@@ -75,10 +71,9 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .metric-value.hi { color: var(--accent); }
 .metric-unit { font-size: 9px; color: var(--text-hint); }
 
-/* ── 지도 컬럼 ── */
-.map-wrap { flex: 1; min-height: 200px; position: relative; }
-.map-placeholder { width: 100%; height: 100%; min-height: 200px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-hint); text-align: center; line-height: 1.8; background: var(--bg); }
-.leaflet-map { width: 100%; height: 100%; min-height: 200px; }
+/* 지도 */
+.map-wrap { flex: 1; min-height: 300px; }
+.map-placeholder { width: 100%; height: 100%; min-height: 300px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-hint); text-align: center; line-height: 1.8; background: var(--bg); }
 .map-tools { display: flex; gap: 5px; padding: 6px 8px; background: var(--surface); border-top: 1px solid var(--border-light); flex-wrap: wrap; }
 .tool-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; }
 .tool-btn.active { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
@@ -86,11 +81,11 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .measure-result { font-size: 10px; color: var(--warn); padding: 0 8px 6px; display: none; }
 .measure-result.show { display: block; }
 
-/* ── 우측 요약 패널 ── */
+/* 요약 */
 .summary-title { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 14px; }
 .summary-block-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .summary-block-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
-.summary-block-name { font-size: 12px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+.summary-block-name { font-size: 12px; font-weight: 500; margin-bottom: 6px; }
 .summary-block-vals { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 .sval { font-size: 10px; color: var(--text-sub); }
 .sval span { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
@@ -99,12 +94,11 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .total-value { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--accent); }
 .total-unit { font-size: 11px; color: var(--text-hint); }
 .divider-line { border: none; border-top: 1px solid var(--border-light); margin: 12px 0; }
-.zone-select { font-size: 12px; }
 .bcr-custom-wrap { display: none; margin-top: 4px; }
 
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
-  .summary-col { position: static; height: auto; border-right: none; border-top: 1px solid var(--border); }
+  .summary-col { position: static; height: auto; border-top: 1px solid var(--border); }
   .block-body { grid-template-columns: 1fr; }
   .col-addr, .col-inputs { border-right: none; border-bottom: 1px solid var(--border-light); }
   .result-strip { grid-template-columns: repeat(3, 1fr); }
@@ -123,7 +117,6 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 
 <div class="layout">
   <div class="blocks-col" id="blocks-container"></div>
-
   <div class="summary-col">
     <div class="summary-title">전체 요약</div>
     <div class="summary-block-list" id="summary-list"></div>
@@ -143,111 +136,85 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 var VKEY = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
 
-// ── 카카오 SDK 동적 로딩 ──────────────────────────────
-var kakaoReady = false, pendingMaps = [];
-(function() {
-  var s = document.createElement('script');
-  s.src = '//dapi.kakao.com/v2/maps/sdk.js?appkey=ebf29618bc5743df48670ec978adc168&libraries=services&autoload=false';
-  s.onload = function() {
-    kakao.maps.load(function() {
-      kakaoReady = true;
-      pendingMaps.forEach(function(p) { doInitMap(p.id, p.lat, p.lng, p.label); });
-      pendingMaps = [];
-    });
-  };
-  document.head.appendChild(s);
-})();
-
 // ── 지도 초기화 ───────────────────────────────────────
+// 좌표: daum.Postcode 응답의 data.x(경도) / data.y(위도) 직접 사용
+// 카카오 Geocoder / 카카오 지도 SDK 완전 제거
+// 지도: Leaflet + vworld WMTS(일반) + vworld WMS(지적도)
 function initMap(id, lat, lng, label) {
-  if (!kakaoReady) { pendingMaps.push({id:id,lat:lat,lng:lng,label:label}); return; }
-  doInitMap(id, lat, lng, label);
-}
-
-function doInitMap(id, lat, lng, label) {
   var wrap = document.getElementById('map-' + id);
   if (!wrap) return;
-  wrap.innerHTML = '<div id="lmap-' + id + '" style="width:100%;height:100%;min-height:200px;"></div>';
+  wrap.innerHTML = '<div id="lmap-' + id + '" style="width:100%;height:100%;min-height:300px;"></div>';
 
-  var coords = new kakao.maps.LatLng(lat, lng);
-  var map = new kakao.maps.Map(document.getElementById('lmap-' + id), { center: coords, level: 3 });
-  map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
+  var map = L.map('lmap-' + id, { center: [lat, lng], zoom: 17 });
 
-  var marker = new kakao.maps.Marker({ map: map, position: coords });
-  var iw = new kakao.maps.InfoWindow({
-    content: '<div style="padding:4px 8px;font-size:11px;white-space:nowrap;">' + label + '</div>'
-  });
-  iw.open(map, marker);
+  // vworld 일반지도 베이스
+  var baseLayer = L.tileLayer(
+    'https://api.vworld.kr/req/wmts/1.0.0/' + VKEY + '/Base/{z}/{y}/{x}.png',
+    { attribution: '© <a href="https://www.vworld.kr">VWorld</a>', maxZoom: 19 }
+  ).addTo(map);
 
-  // vworld WMTS + 지적도 WMS (Leaflet 기반 overlay는 카카오와 혼용 안 됨)
-  // 카카오 위성 레이어는 내장 제공
-  mapObjs[id] = { map: map, kakao: true };
+  // vworld 지적도 WMS (기본 ON)
+  var cadastralLayer = L.tileLayer.wms('https://api.vworld.kr/req/wms', {
+    layers: 'lt_c_landinfobasemap',
+    styles: '',
+    format: 'image/png',
+    transparent: true,
+    version: '1.3.0',
+    key: VKEY,
+    attribution: '© VWorld'
+  }).addTo(map);
+
+  var marker = L.marker([lat, lng]).addTo(map);
+  marker.bindPopup('<div style="font-size:11px;white-space:nowrap;">' + label + '</div>').openPopup();
+
+  mapObjs[id] = { map: map, cadastralLayer: cadastralLayer, marker: marker, cadastralOn: true };
   measureState[id] = { on: false, points: [], polyline: null, clickFn: null };
 
-  // 지적도: vworld WMS를 카카오 커스텀 오버레이로 추가
-  var cadastralOn = false;
-  var cadastralTiles = null;
-
-  // 위성 토글
-  document.getElementById('sat-btn-' + id).onclick = function() {
-    var btn = this;
-    var t = map.getMapTypeId();
-    if (t === kakao.maps.MapTypeId.HYBRID) {
-      map.setMapTypeId(kakao.maps.MapTypeId.ROADMAP);
-      btn.classList.remove('layer-on'); btn.textContent = '위성';
-    } else {
-      map.setMapTypeId(kakao.maps.MapTypeId.HYBRID);
-      btn.classList.add('layer-on'); btn.textContent = '위성 ON';
-    }
-  };
-
-  // 지적도: Leaflet 오버레이 방식 대신 vworld WMS 타일을 카카오 커스텀 타일로
+  // 지적도 토글
   document.getElementById('cadastral-btn-' + id).onclick = function() {
-    var btn = this;
-    if (cadastralOn) {
-      if (cadastralTiles) map.removeOverlayMapTypeId(kakao.maps.MapTypeId.USE_DISTRICT);
-      cadastralOn = false;
+    var obj = mapObjs[id]; var btn = this;
+    if (obj.cadastralOn) {
+      map.removeLayer(obj.cadastralLayer);
+      obj.cadastralOn = false;
       btn.classList.remove('layer-on'); btn.textContent = '지적도';
     } else {
-      map.addOverlayMapTypeId(kakao.maps.MapTypeId.USE_DISTRICT);
-      cadastralOn = true;
+      obj.cadastralLayer.addTo(map);
+      obj.cadastralOn = true;
       btn.classList.add('layer-on'); btn.textContent = '지적도 ON';
     }
   };
 
-  // 거리재기 (카카오 클릭 이벤트)
+  // 거리재기
   document.getElementById('measure-btn-' + id).onclick = function() {
-    var st = measureState[id];
-    var btn = this;
+    var st = measureState[id]; var btn = this;
     var res = document.getElementById('measure-result-' + id);
     if (st.on) {
       st.on = false; btn.classList.remove('active'); btn.textContent = '거리재기';
-      kakao.maps.event.removeListener(map, 'click', st.clickFn);
-      map.setCursor('');
+      map.off('click', st.clickFn);
+      map.getContainer().style.cursor = '';
     } else {
       clearMeasure(id);
       st.on = true; btn.classList.add('active'); btn.textContent = '측정 종료';
       res.className = 'measure-result';
+      map.getContainer().style.cursor = 'crosshair';
       st.clickFn = function(e) {
-        st.points.push(e.latLng);
-        if (st.polyline) st.polyline.setMap(null);
+        st.points.push(e.latlng);
+        if (st.polyline) map.removeLayer(st.polyline);
         if (st.points.length >= 2) {
-          st.polyline = new kakao.maps.Polyline({
-            map: map, path: st.points,
-            strokeWeight: 2, strokeColor: '#b45309', strokeOpacity: 0.9
-          });
-          var dist = st.polyline.getLength();
+          st.polyline = L.polyline(st.points, { color: '#b45309', weight: 2, opacity: 0.9 }).addTo(map);
+          var dist = 0;
+          for (var i = 1; i < st.points.length; i++) dist += st.points[i-1].distanceTo(st.points[i]);
           res.className = 'measure-result show';
           res.textContent = '총 거리: ' + dist.toFixed(1) + ' m';
         }
       };
-      kakao.maps.event.addListener(map, 'click', st.clickFn);
+      map.on('click', st.clickFn);
     }
   };
 
   document.getElementById('reset-btn-' + id).onclick = function() {
     var st = measureState[id];
-    if (st.on) document.getElementById('measure-btn-' + id).onclick.call(document.getElementById('measure-btn-' + id));
+    if (st.on) document.getElementById('measure-btn-' + id).click();
     clearMeasure(id);
     document.getElementById('measure-result-' + id).className = 'measure-result';
   };
@@ -255,84 +222,76 @@ function doInitMap(id, lat, lng, label) {
 
 function clearMeasure(id) {
   var st = measureState[id]; if (!st) return;
-  if (st.polyline && mapObjs[id]) st.polyline.setMap(null);
+  var obj = mapObjs[id];
+  if (st.polyline && obj) obj.map.removeLayer(st.polyline);
   st.points = []; st.polyline = null;
 }
 
-// ── 주소 검색 (카카오 Geocoder 사용) ─────────────────
+// ── 주소 검색 ─────────────────────────────────────────
+// daum.Postcode 응답에 data.x(경도), data.y(위도) 포함 → Geocoder 불필요
 function openAddressSearch(id) {
   new daum.Postcode({
     oncomplete: function(data) {
       var jibun = data.jibunAddress || data.autoJibunAddress || '';
       var display = jibun || data.roadAddress;
       document.getElementById('addr-display-' + id).textContent = display;
+
       var nm = document.getElementById('name-' + id);
-      if (!nm.value) nm.value = (data.bname || '') + ' ' + (data.jibun || '');
+      if (nm && !nm.value) nm.value = (data.bname || '') + ' ' + (data.jibun || '');
 
       ['eum-btn-', 'copy-btn-', 'seoul-btn-'].forEach(function(p) {
-        var el = document.getElementById(p + id);
-        if (el) el.classList.add('show');
+        var el = document.getElementById(p + id); if (el) el.classList.add('show');
       });
       var copyBtn = document.getElementById('copy-btn-' + id);
       if (copyBtn) copyBtn.dataset.addr = display;
 
+      var lat = parseFloat(data.y);
+      var lng = parseFloat(data.x);
       var label = (data.bname || '') + ' ' + (data.jibun || '');
 
-      // 카카오 Geocoder로 좌표 변환
-  function geocode() {
-  var gc = new kakao.maps.services.Geocoder();
-  var tries = [];
-  if (jibun) tries.push(jibun);
-  if (data.roadAddress) tries.push(data.roadAddress);
-  if (!tries.length) return;
+      if (!lat || !lng) return; // 좌표 없으면 무시
 
-  function tryNext(i) {
-    if (i >= tries.length) return;
-    gc.addressSearch(tries[i], function(result, status) {
-      if (status === kakao.maps.services.Status.OK && result.length > 0) {
-        initMap(id, parseFloat(result[0].y), parseFloat(result[0].x), label);
+      var obj = mapObjs[id];
+      if (obj && obj.map) {
+        // 이미 지도 있으면 중심 이동 + 마커 갱신
+        obj.map.setView([lat, lng], 17);
+        if (obj.marker) obj.map.removeLayer(obj.marker);
+        obj.marker = L.marker([lat, lng]).addTo(obj.map);
+        obj.marker.bindPopup('<div style="font-size:11px;white-space:nowrap;">' + label + '</div>').openPopup();
       } else {
-        tryNext(i + 1);
-      }
-    });
-  }
-  tryNext(0);
-}
-
-      if (kakaoReady) {
-        geocode();
-      } else {
-        var t = setInterval(function() { if (kakaoReady) { clearInterval(t); geocode(); } }, 100);
+        initMap(id, lat, lng, label);
       }
     }
   }).open();
 }
 
 // ── 용도지역 → 건폐율 ────────────────────────────────
-var ZONE_BCR = {'50':50,'40':40,'60_1':60,'60_2':60,'50_3':50,'60_j':60,'60_cs':60,'60_cg':60,'60_cn':60,'60_cd':60,'60_ie':60,'60_ig':60,'60_is':60,'20_gb':20,'20_gp':20,'20_gn':20};
+var ZONE_BCR = {
+  '50':50,'40':40,'60_1':60,'60_2':60,'50_3':50,'60_j':60,
+  '60_cs':60,'60_cg':60,'60_cn':60,'60_cd':60,
+  '60_ie':60,'60_ig':60,'60_is':60,
+  '20_gb':20,'20_gp':20,'20_gn':20
+};
 
 function applyZoneBCR(id) {
   var sel = document.getElementById('zone-sel-' + id);
   var wrap = document.getElementById('bcr-wrap-' + id);
   if (!sel) return;
-  if (sel.value === 'custom') {
-    if (wrap) wrap.style.display = 'block';
-    return;
-  }
+  if (sel.value === 'custom') { if (wrap) wrap.style.display = 'block'; return; }
   if (wrap) wrap.style.display = 'none';
   var bcr = ZONE_BCR[sel.value];
   if (bcr !== undefined) { document.getElementById('bcr-' + id).value = bcr; calc(id); }
 }
 
 function applyCustomBCR(id) {
-  var v = parseFloat(document.getElementById('bcr-custom-' + id).value) || 0;
-  document.getElementById('bcr-' + id).value = v;
+  var val = parseFloat(document.getElementById('bcr-custom-' + id).value) || 0;
+  document.getElementById('bcr-' + id).value = val;
   calc(id);
 }
 
 function copyAddr(id) {
   var btn = document.getElementById('copy-btn-' + id);
-  var addr = btn && btn.dataset.addr || '';
+  var addr = (btn && btn.dataset.addr) || '';
   if (!addr) return;
   navigator.clipboard.writeText(addr).then(function() {
     btn.textContent = '복사됨 ✓';
@@ -346,99 +305,106 @@ function copyAddr(id) {
   });
 }
 
-// ── 구역 카드 ─────────────────────────────────────────
+// ── 구역 카드 생성 ────────────────────────────────────
 function addBlock() {
   blockCount++;
   var id = blockCount;
   blocks.push(id);
+
   var div = document.createElement('div');
   div.className = 'block-card';
   div.id = 'block-' + id;
+
   div.innerHTML =
     '<div class="block-header">'
-    + '<span class="block-num">' + String(id).padStart(2,'0') + '</span>'
-    + '<input class="block-name-input" type="text" placeholder="구역명 입력" id="name-' + id + '">'
-    + '<button class="remove-btn" onclick="removeBlock(' + id + ')">삭제</button>'
+      + '<span class="block-num">' + String(id).padStart(2,'0') + '</span>'
+      + '<input class="block-name-input" type="text" placeholder="구역명 입력" id="name-' + id + '">'
+      + '<button class="remove-btn" onclick="removeBlock(' + id + ')">삭제</button>'
     + '</div>'
     + '<div class="block-body">'
 
     // 주소 컬럼
     + '<div class="col-addr">'
-    + '<div class="addr-label">위치</div>'
-    + '<div class="addr-display" id="addr-display-' + id + '">—</div>'
-    + '<button class="addr-btn" onclick="openAddressSearch(' + id + ')">주소 검색</button>'
-    + '<div class="ext-btns">'
-    + '<button class="ext-btn copy-btn" id="copy-btn-' + id + '" onclick="copyAddr(' + id + ')">주소 복사</button>'
-    + '<a class="ext-btn" id="eum-btn-' + id + '" target="_blank" href="https://www.eum.go.kr/web/am/amMain.jsp">토지이음 ↗</a>'
-    + '<a class="ext-btn" id="seoul-btn-' + id + '" target="_blank" href="https://urban.seoul.go.kr/view/map/main.html">서울도시공간포털 ↗</a>'
-    + '</div>'
+      + '<div class="addr-label">위치</div>'
+      + '<div class="addr-display" id="addr-display-' + id + '">—</div>'
+      + '<button class="addr-btn" onclick="openAddressSearch(' + id + ')">주소 검색</button>'
+      + '<div class="ext-btns">'
+        + '<button class="ext-btn copy-btn" id="copy-btn-' + id + '" onclick="copyAddr(' + id + ')">주소 복사</button>'
+        + '<a class="ext-btn" id="eum-btn-' + id + '" target="_blank" href="https://www.eum.go.kr/web/am/amMain.jsp">토지이음 ↗</a>'
+        + '<a class="ext-btn" id="seoul-btn-' + id + '" target="_blank" href="https://urban.seoul.go.kr/view/map/main.html">서울도시공간포털 ↗</a>'
+      + '</div>'
     + '</div>'
 
     // 입력 컬럼
     + '<div class="col-inputs">'
-    + '<input type="hidden" id="bcr-' + id + '" value="60">'
-    + '<div class="section-label">공통</div>'
-    + '<div class="inputs-grid-3">'
-    + '<div class="input-field"><label>대지면적 (㎡)</label><input type="number" id="area-' + id + '" placeholder="입력" oninput="calc(' + id + ')"></div>'
-    + '<div class="input-field"><label>용도지역</label>'
-    + '<select class="zone-select" id="zone-sel-' + id + '" onchange="applyZoneBCR(' + id + ')">'
-    + '<option value="">— 선택 —</option>'
-    + '<option value="50">제1종전용주거 (50%)</option><option value="40">제2종전용주거 (40%)</option>'
-    + '<option value="60_1">제1종일반주거 (60%)</option><option value="60_2">제2종일반주거 (60%)</option>'
-    + '<option value="50_3">제3종일반주거 (50%)</option><option value="60_j">준주거 (60%)</option>'
-    + '<option value="60_cs">중심상업 (60%)</option><option value="60_cg">일반상업 (60%)</option>'
-    + '<option value="60_cn">근린상업 (60%)</option><option value="60_cd">유통상업 (60%)</option>'
-    + '<option value="60_ie">전용공업 (60%)</option><option value="60_ig">일반공업 (60%)</option>'
-    + '<option value="60_is">준공업 (60%)</option>'
-    + '<option value="20_gb">보전녹지 (20%)</option><option value="20_gp">생산녹지 (20%)</option>'
-    + '<option value="20_gn">자연녹지 (20%)</option>'
-    + '<option value="custom">직접 입력</option>'
-    + '</select>'
-    + '<div class="bcr-custom-wrap" id="bcr-wrap-' + id + '"><input type="number" id="bcr-custom-' + id + '" placeholder="건폐율 (%)" oninput="applyCustomBCR(' + id + ')"></div>'
-    + '</div>'
-    + '<div class="input-field"><label>후면건축선후퇴 (m)</label><input type="number" id="rear-' + id + '" value="0" oninput="calc(' + id + ')"></div>'
-    + '</div>'
-    + '<div class="section-label">단변</div>'
-    + '<div class="inputs-grid-3">'
-    + '<div class="input-field"><label>전면도로폭 (m)</label><input type="number" id="road-s-' + id + '" placeholder="예: 50" oninput="calc(' + id + ')"></div>'
-    + '<div class="input-field"><label>전면건축선후퇴 (m)</label><input type="number" id="front-s-' + id + '" value="3" oninput="calc(' + id + ')"></div>'
-    + '<div class="input-field"><label>획지폭 (m)</label><input type="number" id="width-s-' + id + '" placeholder="예: 24.6" oninput="calc(' + id + ')"></div>'
-    + '</div>'
-    + '<div class="inputs-grid">'
-    + '<div class="input-field"><label>획지깊이 (m) <span style="font-size:9px;color:var(--text-hint)">자동</span></label><input type="number" id="depth-s-' + id + '" placeholder="자동계산" readonly style="background:#faf9f7;"></div>'
-    + '</div>'
-    + '<div class="section-label">장변</div>'
-    + '<div class="inputs-grid-3">'
-    + '<div class="input-field"><label>전면도로폭 (m)</label><input type="number" id="road-l-' + id + '" placeholder="예: 50" oninput="calc(' + id + ')"></div>'
-    + '<div class="input-field"><label>전면건축선후퇴 (m)</label><input type="number" id="front-l-' + id + '" value="3" oninput="calc(' + id + ')"></div>'
-    + '<div class="input-field"><label>획지폭 (m)</label><input type="number" id="width-l-' + id + '" placeholder="예: 62" oninput="calc(' + id + ')"></div>'
-    + '</div>'
-    + '<div class="inputs-grid">'
-    + '<div class="input-field"><label>획지깊이 (m) <span style="font-size:9px;color:var(--text-hint)">자동</span></label><input type="number" id="depth-l-' + id + '" placeholder="자동계산" readonly style="background:#faf9f7;"></div>'
-    + '</div>'
-
-    // 결과
-    + '<div class="result-strip">'
-    + '<div class="metric"><div class="metric-label">최저점</div><div class="metric-value" id="r-min-' + id + '">—</div></div>'
-    + '<div class="metric"><div class="metric-label">최고점</div><div class="metric-value" id="r-max-' + id + '">—</div></div>'
-    + '<div class="metric"><div class="metric-label">평균점</div><div class="metric-value" id="r-avg-' + id + '">—</div></div>'
-    + '<div class="metric"><div class="metric-label">최솟값</div><div class="metric-value hi" id="r-minval-' + id + '">—</div></div>'
-    + '<div class="metric"><div class="metric-label">건물바닥면적</div><div class="metric-value" id="r-floor-' + id + '">—</div></div>'
-    + '<div class="metric"><div class="metric-label">체적</div><div class="metric-value" id="r-vol-' + id + '">—</div></div>'
-    + '</div>'
+      + '<input type="hidden" id="bcr-' + id + '" value="60">'
+      + '<div class="section-label">공통</div>'
+      + '<div class="inputs-grid-3">'
+        + '<div class="input-field"><label>대지면적 (㎡)</label><input type="number" id="area-' + id + '" placeholder="입력" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>용도지역</label>'
+          + '<select class="zone-select" id="zone-sel-' + id + '" onchange="applyZoneBCR(' + id + ')">'
+            + '<option value="">— 선택 —</option>'
+            + '<option value="50">제1종전용주거 (50%)</option>'
+            + '<option value="40">제2종전용주거 (40%)</option>'
+            + '<option value="60_1">제1종일반주거 (60%)</option>'
+            + '<option value="60_2">제2종일반주거 (60%)</option>'
+            + '<option value="50_3">제3종일반주거 (50%)</option>'
+            + '<option value="60_j">준주거 (60%)</option>'
+            + '<option value="60_cs">중심상업 (60%)</option>'
+            + '<option value="60_cg">일반상업 (60%)</option>'
+            + '<option value="60_cn">근린상업 (60%)</option>'
+            + '<option value="60_cd">유통상업 (60%)</option>'
+            + '<option value="60_ie">전용공업 (60%)</option>'
+            + '<option value="60_ig">일반공업 (60%)</option>'
+            + '<option value="60_is">준공업 (60%)</option>'
+            + '<option value="20_gb">보전녹지 (20%)</option>'
+            + '<option value="20_gp">생산녹지 (20%)</option>'
+            + '<option value="20_gn">자연녹지 (20%)</option>'
+            + '<option value="custom">직접 입력</option>'
+          + '</select>'
+          + '<div class="bcr-custom-wrap" id="bcr-wrap-' + id + '"><input type="number" id="bcr-custom-' + id + '" placeholder="건폐율 (%)" oninput="applyCustomBCR(' + id + ')"></div>'
+        + '</div>'
+        + '<div class="input-field"><label>후면건축선후퇴 (m)</label><input type="number" id="rear-' + id + '" value="0" oninput="calc(' + id + ')"></div>'
+      + '</div>'
+      + '<div class="section-label">단변</div>'
+      + '<div class="inputs-grid-3">'
+        + '<div class="input-field"><label>전면도로폭 (m)</label><input type="number" id="road-s-' + id + '" placeholder="예: 50" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>전면건축선후퇴 (m)</label><input type="number" id="front-s-' + id + '" value="3" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>획지폭 (m)</label><input type="number" id="width-s-' + id + '" placeholder="예: 24.6" oninput="calc(' + id + ')"></div>'
+      + '</div>'
+      + '<div class="inputs-grid">'
+        + '<div class="input-field"><label>획지깊이 (m) <span style="font-size:9px;color:var(--text-hint)">자동</span></label><input type="number" id="depth-s-' + id + '" placeholder="자동계산" readonly style="background:#faf9f7;"></div>'
+      + '</div>'
+      + '<div class="section-label">장변</div>'
+      + '<div class="inputs-grid-3">'
+        + '<div class="input-field"><label>전면도로폭 (m)</label><input type="number" id="road-l-' + id + '" placeholder="예: 50" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>전면건축선후퇴 (m)</label><input type="number" id="front-l-' + id + '" value="3" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>획지폭 (m)</label><input type="number" id="width-l-' + id + '" placeholder="예: 62" oninput="calc(' + id + ')"></div>'
+      + '</div>'
+      + '<div class="inputs-grid">'
+        + '<div class="input-field"><label>획지깊이 (m) <span style="font-size:9px;color:var(--text-hint)">자동</span></label><input type="number" id="depth-l-' + id + '" placeholder="자동계산" readonly style="background:#faf9f7;"></div>'
+      + '</div>'
+      + '<div class="result-strip">'
+        + '<div class="metric"><div class="metric-label">최저점</div><div class="metric-value" id="r-min-' + id + '">—</div></div>'
+        + '<div class="metric"><div class="metric-label">최고점</div><div class="metric-value" id="r-max-' + id + '">—</div></div>'
+        + '<div class="metric"><div class="metric-label">평균점</div><div class="metric-value" id="r-avg-' + id + '">—</div></div>'
+        + '<div class="metric"><div class="metric-label">최솟값</div><div class="metric-value hi" id="r-minval-' + id + '">—</div></div>'
+        + '<div class="metric"><div class="metric-label">건물바닥면적</div><div class="metric-value" id="r-floor-' + id + '">—</div></div>'
+        + '<div class="metric"><div class="metric-label">체적</div><div class="metric-value" id="r-vol-' + id + '">—</div></div>'
+      + '</div>'
     + '</div>'
 
     // 지도 컬럼
     + '<div class="col-map">'
-    + '<div class="map-wrap"><div id="map-' + id + '" class="map-placeholder">주소를 검색하면<br>지도가 표시됩니다</div></div>'
-    + '<div class="map-tools">'
-    + '<button class="tool-btn layer-on" id="cadastral-btn-' + id + '">지적도 ON</button>'
-    + '<button class="tool-btn" id="sat-btn-' + id + '">위성</button>'
-    + '<button class="tool-btn" id="measure-btn-' + id + '">거리재기</button>'
-    + '<button class="tool-btn" id="reset-btn-' + id + '">초기화</button>'
+      + '<div class="map-wrap"><div id="map-' + id + '" class="map-placeholder">주소를 검색하면<br>지도가 표시됩니다</div></div>'
+      + '<div class="map-tools">'
+        + '<button class="tool-btn layer-on" id="cadastral-btn-' + id + '">지적도 ON</button>'
+        + '<button class="tool-btn" id="measure-btn-' + id + '">거리재기</button>'
+        + '<button class="tool-btn" id="reset-btn-' + id + '">초기화</button>'
+      + '</div>'
+      + '<div class="measure-result" id="measure-result-' + id + '"></div>'
     + '</div>'
-    + '<div class="measure-result" id="measure-result-' + id + '"></div>'
-    + '</div>'
+
     + '</div>';
 
   document.getElementById('blocks-container').appendChild(div);
@@ -447,10 +413,8 @@ function addBlock() {
 
 function removeBlock(id) {
   blocks = blocks.filter(function(b) { return b !== id; });
-  if (mapObjs[id] && mapObjs[id].kakao) {
-    var st = measureState[id];
-    if (st && st.on && mapObjs[id].map) kakao.maps.event.removeListener(mapObjs[id].map, 'click', st.clickFn);
-  }
+  var obj = mapObjs[id];
+  if (obj && obj.map) obj.map.remove();
   delete mapObjs[id]; delete measureState[id];
   var el = document.getElementById('block-' + id); if (el) el.remove();
   updateSummary();
@@ -471,15 +435,13 @@ function calc(id) {
   var rs = calcSide(v('road-s-' + id), v('front-s-' + id), v('width-s-' + id), rear);
   var rl = calcSide(v('road-l-' + id), v('front-l-' + id), v('width-l-' + id), rear);
 
-  // 획지깊이 자동표시
   var ds = document.getElementById('depth-s-' + id);
   var dl = document.getElementById('depth-l-' + id);
   if (ds) ds.value = rs.depth > 0 ? rs.depth.toFixed(1) : '';
   if (dl) dl.value = rl.depth > 0 ? rl.depth.toFixed(1) : '';
 
-  // 단변 기준 (장변 있으면 MIN)
-  var minVal, dMin, dMax, dAvg;
   var hasLong = v('road-l-' + id) > 0 || v('width-l-' + id) > 0;
+  var minVal, dMin, dMax, dAvg;
   if (hasLong && rl.avgPt > 0) {
     minVal = Math.min(rs.avgPt, rl.avgPt);
     dMin = Math.min(rs.minPt, rl.minPt);
@@ -490,16 +452,16 @@ function calc(id) {
   }
 
   var floor = area * bcr, vol = floor * minVal;
-  var fmt = function(n) { return n > 0 ? n.toFixed(1) : '—'; };
+  var fmt  = function(n) { return n > 0 ? n.toFixed(1) : '—'; };
   var fmt0 = function(n) { return n > 0 ? Math.round(n).toLocaleString() : '—'; };
-  var u = function(s) { return '<span class="metric-unit">' + s + '</span>'; };
+  var u    = function(s) { return '<span class="metric-unit">' + s + '</span>'; };
 
-  document.getElementById('r-min-' + id).innerHTML = fmt(dMin) + (dMin > 0 ? u('m') : '');
-  document.getElementById('r-max-' + id).innerHTML = fmt(dMax) + (dMax > 0 ? u('m') : '');
-  document.getElementById('r-avg-' + id).innerHTML = fmt(dAvg) + (dAvg > 0 ? u('m') : '');
-  document.getElementById('r-minval-' + id).innerHTML = fmt(minVal) + (minVal > 0 ? u('m') : '');
-  document.getElementById('r-floor-' + id).innerHTML = fmt(floor) + (floor > 0 ? u('㎡') : '');
-  document.getElementById('r-vol-' + id).innerHTML = fmt0(vol) + (vol > 0 ? u('㎡') : '');
+  document.getElementById('r-min-'    + id).innerHTML = fmt(dMin)   + (dMin   > 0 ? u('m')  : '');
+  document.getElementById('r-max-'    + id).innerHTML = fmt(dMax)   + (dMax   > 0 ? u('m')  : '');
+  document.getElementById('r-avg-'    + id).innerHTML = fmt(dAvg)   + (dAvg   > 0 ? u('m')  : '');
+  document.getElementById('r-minval-' + id).innerHTML = fmt(minVal) + (minVal > 0 ? u('m')  : '');
+  document.getElementById('r-floor-'  + id).innerHTML = fmt(floor)  + (floor  > 0 ? u('㎡') : '');
+  document.getElementById('r-vol-'    + id).innerHTML = fmt0(vol)   + (vol    > 0 ? u('㎡') : '');
   updateSummary();
 }
 
@@ -515,16 +477,18 @@ function updateSummary() {
     var hasLong = v('road-l-' + id) > 0 || v('width-l-' + id) > 0;
     var minVal = (hasLong && rl.avgPt > 0) ? Math.min(rs.avgPt, rl.avgPt) : rs.avgPt;
     var floor = area * bcr, vol = floor * minVal;
+    var nameEl = document.getElementById('name-' + id);
+    var name = (nameEl && nameEl.value) || ('구역 ' + id);
 
-    var name = document.getElementById('name-' + id) && document.getElementById('name-' + id).value || '구역 ' + id;
     var item = document.createElement('div');
     item.className = 'summary-block-item';
-    item.innerHTML = '<div class="summary-block-name">' + String(id).padStart(2,'0') + ' ' + (name || '구역 ' + id) + '</div>'
+    item.innerHTML =
+      '<div class="summary-block-name">' + String(id).padStart(2,'0') + ' ' + name + '</div>'
       + '<div class="summary-block-vals">'
-      + '<div class="sval">허용높이 <span>' + (minVal > 0 ? minVal.toFixed(1) + 'm' : '—') + '</span></div>'
-      + '<div class="sval">면적 <span>' + (area > 0 ? area.toLocaleString() + '㎡' : '—') + '</span></div>'
-      + '<div class="sval">바닥면적 <span>' + (floor > 0 ? Math.round(floor).toLocaleString() + '㎡' : '—') + '</span></div>'
-      + '<div class="sval">체적 <span>' + (vol > 0 ? Math.round(vol).toLocaleString() + '㎡' : '—') + '</span></div>'
+        + '<div class="sval">허용높이 <span>' + (minVal > 0 ? minVal.toFixed(1) + 'm' : '—') + '</span></div>'
+        + '<div class="sval">면적 <span>' + (area > 0 ? area.toLocaleString() + '㎡' : '—') + '</span></div>'
+        + '<div class="sval">바닥면적 <span>' + (floor > 0 ? Math.round(floor).toLocaleString() + '㎡' : '—') + '</span></div>'
+        + '<div class="sval">체적 <span>' + (vol > 0 ? Math.round(vol).toLocaleString() + '㎡' : '—') + '</span></div>'
       + '</div>';
     listEl.appendChild(item);
 
