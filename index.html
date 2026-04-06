@@ -180,33 +180,32 @@ function openAddressSearch(id) {
       document.getElementById('addr-' + id).value = display;
       var nm = document.getElementById('name-' + id);
       if (!nm.value) nm.value = (data.bname || '') + ' ' + (data.jibun || '');
-      var msg = document.getElementById('msg-' + id);
-      msg.className = 'status-msg status-ok';
-      msg.textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
+      document.getElementById('msg-' + id).className = 'status-msg status-ok';
+      document.getElementById('msg-' + id).textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
+
       var eumBtn = document.getElementById('eum-btn-' + id);
       var copyBtn = document.getElementById('copy-btn-' + id);
       var seoulBtn = document.getElementById('seoul-btn-' + id);
       if (eumBtn) { eumBtn.className = 'eum-btn show'; }
       if (copyBtn) { copyBtn.className = 'eum-btn show'; copyBtn.dataset.addr = display; }
       if (seoulBtn) { seoulBtn.className = 'eum-btn show'; }
+
       var label = (data.bname || '') + ' ' + (data.jibun || '');
-      // vworld 주소→좌표 변환 API
-      var vkey = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
-      var addrParam = encodeURIComponent(display);
-      fetch('https://api.vworld.kr/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=' + addrParam + '&refine=true&simple=false&format=json&type=parcel&key=' + vkey)
+      // Nominatim으로 좌표 변환 (한국 지번/도로명 주소)
+      var q1 = encodeURIComponent(display);
+      fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + q1 + '&limit=1&accept-language=ko&countrycodes=kr')
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          if (d.response && d.response.status === 'OK') {
-            var pt = d.response.result.point;
-            geocodeAndShowMap(id, parseFloat(pt.y), parseFloat(pt.x), label);
+          if (d && d.length > 0) {
+            geocodeAndShowMap(id, parseFloat(d[0].lat), parseFloat(d[0].lon), label);
           } else {
-            // 지번 실패시 도로명으로 재시도
-            return fetch('https://api.vworld.kr/req/address?service=address&request=getcoord&version=2.0&crs=epsg:4326&address=' + encodeURIComponent(data.roadAddress || display) + '&refine=true&simple=false&format=json&type=road&key=' + vkey)
+            // 짧은 주소로 재시도 (시구동+번지)
+            var short = (data.sido || '') + ' ' + (data.sigungu || '') + ' ' + (data.bname || '') + ' ' + (data.jibun || '');
+            return fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(short.trim()) + '&limit=1&accept-language=ko&countrycodes=kr')
               .then(function(r2) { return r2.json(); })
               .then(function(d2) {
-                if (d2.response && d2.response.status === 'OK') {
-                  var pt2 = d2.response.result.point;
-                  geocodeAndShowMap(id, parseFloat(pt2.y), parseFloat(pt2.x), label);
+                if (d2 && d2.length > 0) {
+                  geocodeAndShowMap(id, parseFloat(d2[0].lat), parseFloat(d2[0].lon), label);
                 } else {
                   geocodeAndShowMap(id, 37.5665, 126.9780, label);
                 }
@@ -218,7 +217,6 @@ function openAddressSearch(id) {
   }).open();
 }
 
-// ── 거리재기 ──────────────────────────────────────
 function toggleMeasure(id) {
   if (!mapObjs[id]) return;
   var st = measureState[id];
