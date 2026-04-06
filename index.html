@@ -204,10 +204,9 @@ function openAddressSearch(id) {
       msg.className = 'status-msg status-ok';
       msg.textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
       var eumBtn = document.getElementById('eum-btn-' + id);
-      if (eumBtn) {
-        eumBtn.href = 'https://www.eum.go.kr/web/am/amMain.jsp';
-        eumBtn.className = 'eum-btn show';
-      }
+      var copyBtn = document.getElementById('copy-btn-' + id);
+      if (eumBtn) { eumBtn.className = 'eum-btn show'; }
+      if (copyBtn) { copyBtn.className = 'eum-btn show'; copyBtn.dataset.addr = display; }
       var label = (data.bname || '') + ' ' + (data.jibun || '');
       geocodeAndShowMap(id, display, label);
     }
@@ -284,6 +283,23 @@ function resetMeasure(id) {
 }
 
 // ── 구역 카드 생성 ────────────────────────────────
+function copyAddr(id) {
+  var btn = document.getElementById('copy-btn-' + id);
+  if (!btn) return;
+  var addr = btn.dataset.addr || '';
+  if (!addr) return;
+  navigator.clipboard.writeText(addr).then(function() {
+    btn.textContent = '복사됨 ✓';
+    setTimeout(function() { btn.textContent = '주소 복사'; }, 1500);
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = addr; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    btn.textContent = '복사됨 ✓';
+    setTimeout(function() { btn.textContent = '주소 복사'; }, 1500);
+  });
+}
+
 function addBlock() {
   blockCount++;
   var id = blockCount;
@@ -344,7 +360,10 @@ function addBlock() {
     + '</div>'
     + '<div class="map-panel">'
     +   '<div class="map-wrap"><div id="map-' + id + '" class="map-placeholder">주소를 검색하면<br>지도가 표시됩니다</div></div>'
-    +   '<a class="eum-btn" id="eum-btn-' + id + '" target="_blank" href="#">토지이음에서 지적도 보기 ↗</a>'
+    +   '<div style="display:flex;gap:6px;">'
+    +   '<button class="eum-btn" id="copy-btn-' + id + '" onclick="copyAddr(' + id + ')" style="flex:1;">주소 복사</button>'
+    +   '<a class="eum-btn" id="eum-btn-' + id + '" target="_blank" href="https://www.eum.go.kr/web/am/amMain.jsp" style="flex:2;">토지이음 열기 ↗</a>'
+    +   '</div>'
     +   '<div class="map-tools">'
     +     '<button class="tool-btn layer-on" id="cadastral-btn-' + id + '" onclick="toggleCadastral(' + id + ')">지적도 ON</button>'
     +     '<button class="tool-btn" id="sat-btn-' + id + '" onclick="toggleSatellite(' + id + ')">위성</button>'
