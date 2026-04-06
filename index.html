@@ -145,24 +145,66 @@ function initLeafletMap(id, lat, lng, label) {
   var wrap = document.getElementById('map-' + id);
   if (!wrap) return;
   wrap.innerHTML = '<div id="leaflet-' + id + '" style="width:100%;height:100%;"></div>';
+  var KEY = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 
   setTimeout(function() {
     var map = L.map('leaflet-' + id).setView([lat, lng], 17);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
-      maxZoom: 19
-    }).addTo(map);
 
-    // 마커
+    // V-World WMTS 기본지도
+    var baseLayer = L.tileLayer(
+      'https://api.vworld.kr/req/wmts/1.0.0/' + KEY + '/Base/{z}/{y}/{x}.png',
+      { maxZoom: 19, attribution: '© V-World' }
+    ).addTo(map);
+
+    // 지적도 WMS (기본 ON)
+    var cadastralLayer = L.tileLayer.wms(
+      'https://api.vworld.kr/req/wms?KEY=' + KEY,
+      { layers: 'lt_c_landinfobasemap', format: 'image/png', transparent: true, version: '1.3.0', opacity: 0.8 }
+    ).addTo(map);
+
+    // 위성 레이어
+    var satLayer = L.tileLayer(
+      'https://api.vworld.kr/req/wmts/1.0.0/' + KEY + '/Satellite/{z}/{y}/{x}.jpeg',
+      { maxZoom: 19, attribution: '© V-World' }
+    );
+
     var marker = L.marker([lat, lng]).addTo(map);
-    marker.bindPopup(label).openPopup();
+    marker.bindPopup('<b>' + label + '</b>').openPopup();
 
-    mapObjs[id] = { map: map, marker: marker };
-    measureState[id] = { on: false, points: [], polyline: null, markers: [] };
-
-    // 지도 크기 재계산 (overflow hidden 안에 있을 때 필요)
+    mapObjs[id] = { map: map, baseLayer: baseLayer, cadastralLayer: cadastralLayer, satLayer: satLayer, cadastralOn: true, satOn: false };
+    measureState[id] = { on: false, points: [], polyline: null, markers: [], clickFn: null };
     map.invalidateSize();
+
+    // 지적도 버튼 초기 ON 표시
+    var cBtn = document.getElementById('cadastral-btn-' + id);
+    if (cBtn) { cBtn.classList.add('layer-on'); cBtn.textContent = '지적도 ON'; }
   }, 100);
+}
+
+function toggleCadastral(id) {
+  var obj = mapObjs[id]; if (!obj) return;
+  var btn = document.getElementById('cadastral-btn-' + id);
+  if (obj.cadastralOn) {
+    obj.map.removeLayer(obj.cadastralLayer); obj.cadastralOn = false;
+    btn.classList.remove('layer-on'); btn.textContent = '지적도';
+  } else {
+    obj.cadastralLayer.addTo(obj.map); obj.cadastralOn = true;
+    btn.classList.add('layer-on'); btn.textContent = '지적도 ON';
+  }
+}
+
+function toggleSatellite(id) {
+  var obj = mapObjs[id]; if (!obj) return;
+  var btn = document.getElementById('sat-btn-' + id);
+  if (obj.satOn) {
+    obj.map.removeLayer(obj.satLayer); obj.baseLayer.addTo(obj.map);
+    if (obj.cadastralOn) { obj.map.removeLayer(obj.cadastralLayer); obj.cadastralLayer.addTo(obj.map); }
+    obj.satOn = false; btn.classList.remove('layer-on'); btn.textContent = '위성';
+  } else {
+    obj.map.removeLayer(obj.baseLayer); obj.satLayer.addTo(obj.map);
+    if (obj.cadastralOn) { obj.map.removeLayer(obj.cadastralLayer); obj.cadastralLayer.addTo(obj.map); }
+    obj.satOn = true; btn.classList.add('layer-on'); btn.textContent = '위성 ON';
+  }
 }
 
 // ── 주소 검색 ─────────────────────────────────────
@@ -319,6 +361,8 @@ function addBlock() {
     +   '<div class="map-wrap"><div id="map-' + id + '" class="map-placeholder">주소를 검색하면<br>지도가 표시됩니다</div></div>'
     +   '<a class="eum-btn" id="eum-btn-' + id + '" target="_blank" href="#">토지이음에서 지적도 보기 ↗</a>'
     +   '<div class="map-tools">'
+    +     '<button class="tool-btn layer-on" id="cadastral-btn-' + id + '" onclick="toggleCadastral(' + id + ')">지적도 ON</button>'
+    +     '<button class="tool-btn" id="sat-btn-' + id + '" onclick="toggleSatellite(' + id + ')">위성</button>'
     +     '<button class="tool-btn" id="measure-btn-' + id + '" onclick="toggleMeasure(' + id + ')">거리재기</button>'
     +     '<button class="tool-btn" onclick="resetMeasure(' + id + ')">초기화</button>'
     +   '</div>'
