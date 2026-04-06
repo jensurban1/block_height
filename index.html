@@ -118,74 +118,147 @@
 </div>
 
 <script>
-const LAND_API_KEY = 'CC242473-1171-3CB7-ACE2-2410141837A5';
+const LAND_KEY = 'CC242473-1171-3CB7-ACE2-2410141837A5';
 let blockCount = 0;
 let blocks = [];
 let cbIdx = 0;
 
-function fetchLandByPNU(pnu, blockId, msg) {
-  const cbName = '_cb_' + (++cbIdx);
+function makePNU(data) {
+  // 법정동코드 10자리
+  const bcode = data.bcode || '';
+  // 지번에서 산 여부, 본번, 부번 추출
+  const jibunAddr = data.jibunAddress || data.autoJibunAddress || '';
+  const isSan = /산\s*\d/.test(jibunAddr) ? '2' : '1';
+  const jibun = (data.jibun || '').replace('산', '').trim();
+  const parts = jibun.split('-');
+  const main = String(parseInt(parts[0]) || 0).padStart(4, '0');
+  const sub  = String(parseInt(parts[1]) || 0).padStart(4, '0');
+  return bcode + isSan + main + sub;
+}
+
+function fetchArea(pnu, blockId, msg) {
+  const cbName = '_cb' + (++cbIdx);
+  const url = `https://apis.data.go.kr/1611000/nsdi/EaInfoService/wfs`
+    + `?service=WFS&version=1.1.0&request=GetFeature`
+    + `&typeName=EaInfoService:EA_LTCL_SPBD`
+    + `&output=application/json`
+    + `&CQL_FILTER=PNU%3D%27${pnu}%27`
+    + `&ServiceKey=${encodeURIComponent(LAND_KEY)}`
+    + `&callback=${cbName}`;
+
   const script = document.createElement('script');
-  const encoded = encodeURIComponent(LAND_API_KEY);
-  script.src = `https://apis.data.go.kr/1611000/nsdi/LandCharacterService/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=LandCharacterService:LC_LAND&output=application/json&CQL_FILTER=PNU%3D%27${pnu}%27&ServiceKey=${encoded}&callback=${cbName}`;
+  script.src = url;
+
+  const timer = setTimeout(() => {
+    cleanup();
+    msg.className = 'status-msg status-err';
+    msg.textContent = '조회 시간 초과. 대지면적을 직접 입력해주세요.';
+  }, 8000);
+
+  function cleanup() {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  }
 
   window[cbName] = function(data) {
-    delete window[cbName];
-    document.body.removeChild(script);
+    cleanup();
     try {
       const features = data?.features;
       if (!features || features.length === 0) {
-        msg.className = 'status-msg status-err';
-        msg.textContent = '토지정보를 찾을 수 없어요. 대지면적을 직접 입력해주세요.';
+        // 면적 못 찾으면 토지임야 다른 엔드포인트 시도
+        fetchAreaFallback(pnu, blockId, msg);
         return;
       }
       const props = features[0].properties;
-      const area = parseFloat(props.lndpclAr || props.LNDPCL_AR || 0);
-      if (!area) {
-        msg.className = 'status-msg status-err';
-        msg.textContent = '면적 정보가 없어요. 직접 입력해주세요.';
-        return;
-      }
-      const areaInput = document.getElementById('area-' + blockId);
-      areaInput.value = area.toFixed(1);
-      areaInput.classList.add('auto-filled');
-      msg.className = 'status-msg status-ok';
-      msg.textContent = `✓ 주소 선택 완료 — 대지면적 ${area.toFixed(1)}㎡ 자동입력됨`;
-      calc(blockId);
+      const area = parseFloat(
+        props.lndpclAr || props.LNDPCL_AR ||
+        props.area || props.AREA || 0
+      );
+      if (!area) { fetchAreaFallback(pnu, blockId, msg); return; }
+      setArea(blockId, area, msg);
     } catch(e) {
-      msg.className = 'status-msg status-err';
-      msg.textContent = '조회 오류. 대지면적을 직접 입력해주세요.';
+      fetchAreaFallback(pnu, blockId, msg);
     }
   };
 
   script.onerror = function() {
-    delete window[cbName];
-    document.body.removeChild(script);
-    msg.className = 'status-msg status-err';
-    msg.textContent = 'API 오류. 대지면적을 직접 입력해주세요.';
+    cleanup();
+    fetchAreaFallback(pnu, blockId, msg);
   };
-
-  setTimeout(() => {
-    if (window[cbName]) {
-      delete window[cbName];
-      if (document.body.contains(script)) document.body.removeChild(script);
-      msg.className = 'status-msg status-err';
-      msg.textContent = '조회 시간 초과. 대지면적을 직접 입력해주세요.';
-    }
-  }, 8000);
 
   document.body.appendChild(script);
 }
 
-function makePNU(data) {
-  // PNU = 법정동코드(10자리) + 산여부(1) + 본번(4) + 부번(4)
-  const bjdCode = data.bcode; // 법정동코드 10자리
-  const jibun = data.jibun || '';
-  const isSan = data.jibunAddress && data.jibunAddress.includes('산') ? '2' : '1';
-  const parts = jibun.replace('산','').trim().split('-');
-  const main = String(parseInt(parts[0]) || 0).padStart(4, '0');
-  const sub = String(parseInt(parts[1]) || 0).padStart(4, '0');
-  return bjdCode + isSan + main + sub;
+function fetchAreaFallback(pnu, blockId, msg) {
+  // 토지임야정보 서비스 (다른 엔드포인트)
+  const cbName = '_cb' + (++cbIdx);
+  const url = `https://apis.data.go.kr/1611000/nsdi/LandUseService/wfs`
+    + `?service=WFS&version=1.1.0&request=GetFeature`
+    + `&typeName=LandUseService:LT_C_LANDINFOBASEMAP`
+    + `&output=application/json`
+    + `&CQL_FILTER=PNU%3D%27${pnu}%27`
+    + `&ServiceKey=${encodeURIComponent(LAND_KEY)}`
+    + `&callback=${cbName}`;
+
+  const script = document.createElement('script');
+  script.src = url;
+
+  const timer = setTimeout(() => {
+    cleanup();
+    msg.className = 'status-msg status-err';
+    msg.textContent = '조회 실패. 대지면적을 직접 입력해주세요.';
+  }, 8000);
+
+  function cleanup() {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  }
+
+  window[cbName] = function(data) {
+    cleanup();
+    try {
+      const features = data?.features;
+      if (!features || features.length === 0) {
+        msg.className = 'status-msg status-err';
+        msg.textContent = '토지정보 없음. 대지면적을 직접 입력해주세요.';
+        return;
+      }
+      const props = features[0].properties;
+      const area = parseFloat(
+        props.lndpclAr || props.LNDPCL_AR ||
+        props.area || props.AREA ||
+        props.shape_area || props.SHAPE_AREA || 0
+      );
+      if (!area) {
+        msg.className = 'status-msg status-err';
+        msg.textContent = '면적 정보 없음. 직접 입력해주세요.';
+        return;
+      }
+      setArea(blockId, area, msg);
+    } catch(e) {
+      msg.className = 'status-msg status-err';
+      msg.textContent = '오류 발생. 대지면적을 직접 입력해주세요.';
+    }
+  };
+
+  script.onerror = function() {
+    cleanup();
+    msg.className = 'status-msg status-err';
+    msg.textContent = '조회 실패. 대지면적을 직접 입력해주세요.';
+  };
+
+  document.body.appendChild(script);
+}
+
+function setArea(blockId, area, msg) {
+  const input = document.getElementById('area-' + blockId);
+  input.value = area.toFixed(1);
+  input.classList.add('auto-filled');
+  msg.className = 'status-msg status-ok';
+  msg.textContent = `✓ 대지면적 ${area.toFixed(1)}㎡ 자동입력 완료`;
+  calc(blockId);
 }
 
 function openAddressSearch(id) {
@@ -201,7 +274,8 @@ function openAddressSearch(id) {
       msg.textContent = '대지면적 조회 중...';
 
       const pnu = makePNU(data);
-      fetchLandByPNU(pnu, id, msg);
+      console.log('PNU:', pnu, '| data:', data);
+      fetchArea(pnu, id, msg);
     }
   }).open();
 }
