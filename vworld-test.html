@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-World 테스트</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  body { font-family: sans-serif; margin: 0; background: #f5f4f0; padding: 24px; }
+  h2 { font-size: 15px; margin-bottom: 12px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .box { background: #fff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+  .label { font-size: 12px; font-weight: 600; padding: 8px 12px; background: #fafafa; border-bottom: 1px solid #eee; }
+  .map { height: 260px; }
+  .log { background: #1a1916; color: #a0f0a0; border-radius: 8px; padding: 14px; font-size: 12px; font-family: monospace; line-height: 1.8; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h2>V-World 레이어 테스트 (논현동 92 기준)</h2>
+<div class="grid">
+  <div class="box"><div class="label">① WMTS 기본지도</div><div class="map" id="m1"></div></div>
+  <div class="box"><div class="label">② WMTS + 지적도 WMS</div><div class="map" id="m2"></div></div>
+  <div class="box"><div class="label">③ 위성</div><div class="map" id="m3"></div></div>
+  <div class="box"><div class="label">④ OSM + 지적도 WMS</div><div class="map" id="m4"></div></div>
+</div>
+<div class="log" id="log">로딩 시작...\n</div>
+
+<script>
+var KEY = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
+var LAT = 37.5172, LNG = 127.0286;
+var logEl = document.getElementById('log');
+function log(msg) { logEl.textContent += msg + '\n'; }
+
+var m1 = L.map('m1').setView([LAT,LNG],17);
+var t1 = L.tileLayer('https://api.vworld.kr/req/wmts/1.0.0/'+KEY+'/Base/{z}/{y}/{x}.png',{maxZoom:19});
+t1.on('load',function(){log('[①] WMTS Base ✓ 성공');});
+t1.on('tileerror',function(){log('[①] WMTS Base ✗ 실패');});
+t1.addTo(m1);
+
+var m2 = L.map('m2').setView([LAT,LNG],17);
+L.tileLayer('https://api.vworld.kr/req/wmts/1.0.0/'+KEY+'/Base/{z}/{y}/{x}.png',{maxZoom:19}).addTo(m2);
+var wms1 = L.tileLayer.wms('https://api.vworld.kr/req/wms?KEY='+KEY,{
+  layers:'lt_c_landinfobasemap',format:'image/png',transparent:true,version:'1.3.0',opacity:0.8
+});
+wms1.on('load',function(){log('[②] 지적도 WMS ✓ 성공');});
+wms1.on('tileerror',function(){log('[②] 지적도 WMS ✗ 실패');});
+wms1.addTo(m2);
+
+var m3 = L.map('m3').setView([LAT,LNG],17);
+var t3 = L.tileLayer('https://api.vworld.kr/req/wmts/1.0.0/'+KEY+'/Satellite/{z}/{y}/{x}.jpeg',{maxZoom:19});
+t3.on('load',function(){log('[③] 위성 ✓ 성공');});
+t3.on('tileerror',function(){log('[③] 위성 ✗ 실패');});
+t3.addTo(m3);
+
+var m4 = L.map('m4').setView([LAT,LNG],17);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(m4);
+var wms2 = L.tileLayer.wms('https://api.vworld.kr/req/wms?KEY='+KEY,{
+  layers:'lt_c_landinfobasemap',format:'image/png',transparent:true,version:'1.3.0',opacity:0.8
+});
+wms2.on('load',function(){log('[④] OSM+지적도 WMS ✓ 성공');});
+wms2.on('tileerror',function(){log('[④] OSM+지적도 WMS ✗ 실패');});
+wms2.addTo(m4);
+</script>
+</body>
+</html>
