@@ -199,14 +199,14 @@ var ZONE_BCR = {
 function fetchZoneAndBCR(id, lat, lng) {
   var KEY2 = 'CC242473-1171-3CB7-ACE2-2410141837A5';
   var cbName = '_zoneCb' + Date.now();
-  var url = 'https://api.vworld.kr/req/data?service=data&version=2.0&request=GetFeature'
+  var d = 0.001;
+  var url = 'https://api.vworld.kr/req/wfs?service=WFS&version=1.1.0&request=GetFeature'
     + '&key=' + KEY2
     + '&domain=jensurban1.github.io'
-    + '&data=LT_C_UQ111'
-    + '&geometry=false'
-    + '&attribute=true'
-    + '&geomfilter=POINT(' + lng + ' ' + lat + ')'
-    + '&format=json'
+    + '&typeName=lt_c_uq111'
+    + '&output=application/json'
+    + '&srsName=EPSG:4326'
+    + '&BBOX=' + (lng-d) + ',' + (lat-d) + ',' + (lng+d) + ',' + (lat+d)
     + '&callback=' + cbName;
 
   var script = document.createElement('script');
@@ -223,37 +223,47 @@ function fetchZoneAndBCR(id, lat, lng) {
     delete window[cbName];
     if (script.parentNode) script.parentNode.removeChild(script);
     try {
-      var features = data && data.response && data.response.result
-        && data.response.result.featureCollection
-        && data.response.result.featureCollection.features;
+      var features = data && data.features;
       if (!features || features.length === 0) {
         setZoneStatus(id, '용도지역 정보 없음', false); return;
       }
-      var props = features[0].properties;
-      var zoneName = props.uq111 || props.UQ111 || props.prpos_area_dstrc_nm || '';
-      if (!zoneName) {
-        // 모든 프로퍼티 키 확인
-        for (var k in props) { if (props[k] && typeof props[k] === 'string' && props[k].indexOf('지역') > -1) { zoneName = props[k]; break; } }
+
+      // 좌표에 가장 가까운 feature 선택 (면적 작은 것 우선 = 더 세밀한 용도지역)
+      var bestZone = '';
+      var bestArea = Infinity;
+      for (var i = 0; i < features.length; i++) {
+        var p = features[i].properties || {};
+        var name = p.uname || '';
+        if (!name || name === 'null') continue;
+        // bbox 면적으로 가장 작은(세밀한) 구역 선택
+        var bbox = features[i].bbox;
+        var area = bbox ? (bbox[2]-bbox[0]) * (bbox[3]-bbox[1]) : Infinity;
+        if (area < bestArea) { bestArea = area; bestZone = name; }
       }
-      var bcr = ZONE_BCR[zoneName];
+
+      if (!bestZone) {
+        setZoneStatus(id, '용도지역 정보 없음', false); return;
+      }
+
+      var bcr = ZONE_BCR[bestZone];
       if (bcr !== undefined) {
         document.getElementById('bcr-' + id).value = bcr;
-        setZoneStatus(id, '✓ 용도지역: ' + zoneName + ' → 건폐율 ' + bcr + '%', true);
+        setZoneStatus(id, '✓ ' + bestZone + ' → 건폐율 ' + bcr + '%', true);
         calc(id);
       } else {
-        setZoneStatus(id, '용도지역: ' + (zoneName || '알 수 없음') + ' (건폐율 직접 입력)', false);
+        setZoneStatus(id, '용도지역: ' + bestZone + ' (건폐율 직접 입력)', false);
       }
     } catch(e) {
       setZoneStatus(id, '용도지역 파싱 오류', false);
     }
   };
+
   script.onerror = function() {
     delete window[cbName];
     setZoneStatus(id, '용도지역 조회 실패', false);
   };
   document.body.appendChild(script);
 }
-
 function setZoneStatus(id, msg, ok) {
   var el = document.getElementById('zone-msg-' + id);
   if (el) { el.textContent = msg; el.className = ok ? 'zone-msg ok' : 'zone-msg err'; }
