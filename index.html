@@ -37,11 +37,13 @@
   input[type="text"], input[type="number"] { font-family: 'Noto Sans KR', sans-serif; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 8px 12px; outline: none; transition: border-color 0.15s; width: 100%; }
   input[type="text"]:focus, input[type="number"]:focus { border-color: var(--accent); }
   input.addr-input { background: #faf9f7; cursor: pointer; }
+  input.auto-filled { border-color: var(--success) !important; background: var(--success-bg) !important; }
   .lookup-btn { font-size: 13px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--accent); border: none; border-radius: 7px; padding: 8px 18px; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
   .lookup-btn:hover { opacity: 0.85; }
   .status-msg { font-size: 12px; margin-top: 6px; min-height: 18px; }
   .status-ok { color: var(--success); }
   .status-err { color: var(--danger); }
+  .status-loading { color: var(--text-hint); }
   .divider { border: none; border-top: 1px solid var(--border-light); margin: 16px 0; }
   .mode-toggle { display: flex; gap: 6px; margin-bottom: 16px; }
   .mode-btn { font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-sub); cursor: pointer; transition: all 0.15s; }
@@ -49,6 +51,7 @@
   .inputs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
   .input-field { display: flex; flex-direction: column; gap: 5px; }
   .input-field label { font-size: 11px; color: var(--text-sub); }
+  .auto-tag { display: inline-block; font-size: 9px; background: var(--success-bg); color: var(--success); border-radius: 3px; padding: 1px 4px; margin-left: 3px; vertical-align: middle; }
   .side-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
   .side-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
   .result-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-light); }
@@ -115,20 +118,90 @@
 </div>
 
 <script>
+const LAND_API_KEY = 'CC242473-1171-3CB7-ACE2-2410141837A5';
 let blockCount = 0;
 let blocks = [];
+let cbIdx = 0;
+
+function fetchLandByPNU(pnu, blockId, msg) {
+  const cbName = '_cb_' + (++cbIdx);
+  const script = document.createElement('script');
+  const encoded = encodeURIComponent(LAND_API_KEY);
+  script.src = `https://apis.data.go.kr/1611000/nsdi/LandCharacterService/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=LandCharacterService:LC_LAND&output=application/json&CQL_FILTER=PNU%3D%27${pnu}%27&ServiceKey=${encoded}&callback=${cbName}`;
+
+  window[cbName] = function(data) {
+    delete window[cbName];
+    document.body.removeChild(script);
+    try {
+      const features = data?.features;
+      if (!features || features.length === 0) {
+        msg.className = 'status-msg status-err';
+        msg.textContent = '토지정보를 찾을 수 없어요. 대지면적을 직접 입력해주세요.';
+        return;
+      }
+      const props = features[0].properties;
+      const area = parseFloat(props.lndpclAr || props.LNDPCL_AR || 0);
+      if (!area) {
+        msg.className = 'status-msg status-err';
+        msg.textContent = '면적 정보가 없어요. 직접 입력해주세요.';
+        return;
+      }
+      const areaInput = document.getElementById('area-' + blockId);
+      areaInput.value = area.toFixed(1);
+      areaInput.classList.add('auto-filled');
+      msg.className = 'status-msg status-ok';
+      msg.textContent = `✓ 주소 선택 완료 — 대지면적 ${area.toFixed(1)}㎡ 자동입력됨`;
+      calc(blockId);
+    } catch(e) {
+      msg.className = 'status-msg status-err';
+      msg.textContent = '조회 오류. 대지면적을 직접 입력해주세요.';
+    }
+  };
+
+  script.onerror = function() {
+    delete window[cbName];
+    document.body.removeChild(script);
+    msg.className = 'status-msg status-err';
+    msg.textContent = 'API 오류. 대지면적을 직접 입력해주세요.';
+  };
+
+  setTimeout(() => {
+    if (window[cbName]) {
+      delete window[cbName];
+      if (document.body.contains(script)) document.body.removeChild(script);
+      msg.className = 'status-msg status-err';
+      msg.textContent = '조회 시간 초과. 대지면적을 직접 입력해주세요.';
+    }
+  }, 8000);
+
+  document.body.appendChild(script);
+}
+
+function makePNU(data) {
+  // PNU = 법정동코드(10자리) + 산여부(1) + 본번(4) + 부번(4)
+  const bjdCode = data.bcode; // 법정동코드 10자리
+  const jibun = data.jibun || '';
+  const isSan = data.jibunAddress && data.jibunAddress.includes('산') ? '2' : '1';
+  const parts = jibun.replace('산','').trim().split('-');
+  const main = String(parseInt(parts[0]) || 0).padStart(4, '0');
+  const sub = String(parseInt(parts[1]) || 0).padStart(4, '0');
+  return bjdCode + isSan + main + sub;
+}
 
 function openAddressSearch(id) {
   new daum.Postcode({
     oncomplete: function(data) {
       const jibun = data.jibunAddress || data.autoJibunAddress || '';
-      const road = data.roadAddress || '';
-      document.getElementById('addr-' + id).value = jibun || road;
+      document.getElementById('addr-' + id).value = jibun || data.roadAddress;
       const nameInput = document.getElementById('name-' + id);
       if (!nameInput.value) nameInput.value = (data.bname || '') + ' ' + (data.jibun || '');
+
       const msg = document.getElementById('msg-' + id);
-      msg.className = 'status-msg status-ok';
-      msg.textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
+      msg.className = 'status-msg status-loading';
+      msg.textContent = '대지면적 조회 중...';
+
+      const pnu = makePNU(data);
+      fetchLandByPNU(pnu, id, msg);
     }
   }).open();
 }
@@ -165,8 +238,8 @@ function addBlock() {
       <div class="side-label">공통</div>
       <div class="inputs-grid">
         <div class="input-field">
-          <label>대지면적 (㎡)</label>
-          <input type="number" id="area-${id}" placeholder="직접 입력" oninput="calc(${id})">
+          <label>대지면적 (㎡) <span class="auto-tag">자동</span></label>
+          <input type="number" id="area-${id}" placeholder="주소 검색 후 자동입력" oninput="calc(${id})">
         </div>
         <div class="input-field">
           <label>건폐율 (%)</label>
