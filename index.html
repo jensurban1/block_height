@@ -78,6 +78,9 @@
   .summary-metric-value { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; }
   .summary-metric-value.big { color: var(--accent); font-size: 24px; }
   .summary-metric-unit { font-size: 11px; color: var(--text-hint); font-family: 'Noto Sans KR', sans-serif; }
+  .zone-msg { font-size:11px; margin-top:4px; min-height:16px; }
+  .zone-msg.ok { color:var(--success); }
+  .zone-msg.err { color:var(--text-hint); }
   .eum-btn { display:none; font-size:11px; font-family:'Noto Sans KR',sans-serif; font-weight:500; padding:7px 12px; border-radius:5px; border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent-text); cursor:pointer; text-decoration:none; text-align:center; width:100%; }
   .eum-btn:hover { background:var(--accent); color:#fff; }
   .eum-btn.show { display:block; }
@@ -159,7 +162,7 @@ function initLeafletMap(id, lat, lng, label) {
     // 지적도 WMS (기본 ON)
     var cadastralLayer = L.tileLayer.wms(
       'https://api.vworld.kr/req/wms?KEY=' + KEY,
-      { layers: 'lt_c_landinfobasemap', format: 'image/png', transparent: true, version: '1.3.0', opacity: 0.8 }
+      { layers: 'lt_c_landinfobasemap', format: 'image/png', transparent: true, version: '1.3.0', opacity: 0.8, maxZoom: 19, maxNativeZoom: 19 }
     ).addTo(map);
 
     // 위성 레이어
@@ -174,11 +177,86 @@ function initLeafletMap(id, lat, lng, label) {
     mapObjs[id] = { map: map, baseLayer: baseLayer, cadastralLayer: cadastralLayer, satLayer: satLayer, cadastralOn: true, satOn: false };
     measureState[id] = { on: false, points: [], polyline: null, markers: [], clickFn: null };
     map.invalidateSize();
+    fetchZoneAndBCR(id, lat, lng);
 
     // 지적도 버튼 초기 ON 표시
     var cBtn = document.getElementById('cadastral-btn-' + id);
     if (cBtn) { cBtn.classList.add('layer-on'); cBtn.textContent = '지적도 ON'; }
   }, 100);
+}
+
+
+// ── 용도지역별 건폐율 테이블 ──────────────────────
+var ZONE_BCR = {
+  '제1종전용주거지역': 50, '제2종전용주거지역': 40,
+  '제1종일반주거지역': 60, '제2종일반주거지역': 60, '제3종일반주거지역': 50,
+  '준주거지역': 60,
+  '중심상업지역': 60, '일반상업지역': 60, '근린상업지역': 60, '유통상업지역': 60,
+  '전용공업지역': 60, '일반공업지역': 60, '준공업지역': 60,
+  '보전녹지지역': 20, '생산녹지지역': 20, '자연녹지지역': 20
+};
+
+function fetchZoneAndBCR(id, lat, lng) {
+  var KEY2 = 'CC242473-1171-3CB7-ACE2-2410141837A5';
+  var cbName = '_zoneCb' + Date.now();
+  var url = 'https://api.vworld.kr/req/data?service=data&version=2.0&request=GetFeature'
+    + '&key=' + KEY2
+    + '&domain=jensurban1.github.io'
+    + '&data=LT_C_UQ111'
+    + '&geometry=false'
+    + '&attribute=true'
+    + '&geomfilter=POINT(' + lng + ' ' + lat + ')'
+    + '&format=json'
+    + '&callback=' + cbName;
+
+  var script = document.createElement('script');
+  script.src = url;
+
+  var timer = setTimeout(function() {
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    setZoneStatus(id, '용도지역 조회 시간 초과', false);
+  }, 8000);
+
+  window[cbName] = function(data) {
+    clearTimeout(timer);
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    try {
+      var features = data && data.response && data.response.result
+        && data.response.result.featureCollection
+        && data.response.result.featureCollection.features;
+      if (!features || features.length === 0) {
+        setZoneStatus(id, '용도지역 정보 없음', false); return;
+      }
+      var props = features[0].properties;
+      var zoneName = props.uq111 || props.UQ111 || props.prpos_area_dstrc_nm || '';
+      if (!zoneName) {
+        // 모든 프로퍼티 키 확인
+        for (var k in props) { if (props[k] && typeof props[k] === 'string' && props[k].indexOf('지역') > -1) { zoneName = props[k]; break; } }
+      }
+      var bcr = ZONE_BCR[zoneName];
+      if (bcr !== undefined) {
+        document.getElementById('bcr-' + id).value = bcr;
+        setZoneStatus(id, '✓ 용도지역: ' + zoneName + ' → 건폐율 ' + bcr + '%', true);
+        calc(id);
+      } else {
+        setZoneStatus(id, '용도지역: ' + (zoneName || '알 수 없음') + ' (건폐율 직접 입력)', false);
+      }
+    } catch(e) {
+      setZoneStatus(id, '용도지역 파싱 오류', false);
+    }
+  };
+  script.onerror = function() {
+    delete window[cbName];
+    setZoneStatus(id, '용도지역 조회 실패', false);
+  };
+  document.body.appendChild(script);
+}
+
+function setZoneStatus(id, msg, ok) {
+  var el = document.getElementById('zone-msg-' + id);
+  if (el) { el.textContent = msg; el.className = ok ? 'zone-msg ok' : 'zone-msg err'; }
 }
 
 function toggleCadastral(id) {
@@ -331,7 +409,7 @@ function addBlock() {
     +   '<div class="side-label">공통</div>'
     +   '<div class="inputs-grid">'
     +     '<div class="input-field"><label>대지면적 (㎡)</label><input type="number" id="area-' + id + '" placeholder="직접 입력" oninput="calc(' + id + ')"></div>'
-    +     '<div class="input-field"><label>건폐율 (%)</label><input type="number" id="bcr-' + id + '" value="60" oninput="calc(' + id + ')"></div>'
+    +     '<div class="input-field"><label>건폐율 (%)</label><input type="number" id="bcr-' + id + '" value="60" oninput="calc(' + id + ')"><div class="zone-msg" id="zone-msg-' + id + '"></div></div>'
     +     '<div class="input-field"><label>후면건축선후퇴 (m)</label><input type="number" id="rear-' + id + '" value="0" oninput="calc(' + id + ')"></div>'
     +   '</div>'
     +   '<div class="side-label">단변</div>'
