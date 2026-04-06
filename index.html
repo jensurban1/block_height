@@ -198,7 +198,6 @@ var ZONE_BCR = {
 
 function fetchZoneAndBCR(id, lat, lng) {
   var KEY2 = 'CC242473-1171-3CB7-ACE2-2410141837A5';
-  var cbName = '_zoneCb' + Date.now();
   var d = 0.001;
   var url = 'https://api.vworld.kr/req/wfs?service=WFS&version=1.1.0&request=GetFeature'
     + '&key=' + KEY2
@@ -206,44 +205,30 @@ function fetchZoneAndBCR(id, lat, lng) {
     + '&typeName=lt_c_uq111'
     + '&output=application/json'
     + '&srsName=EPSG:4326'
-    + '&BBOX=' + (lng-d) + ',' + (lat-d) + ',' + (lng+d) + ',' + (lat+d)
-    + '&callback=' + cbName;
+    + '&BBOX=' + (lng-d) + ',' + (lat-d) + ',' + (lng+d) + ',' + (lat+d);
 
-  var script = document.createElement('script');
-  script.src = url;
+  setZoneStatus(id, '용도지역 조회 중...', false);
 
-  var timer = setTimeout(function() {
-    delete window[cbName];
-    if (script.parentNode) script.parentNode.removeChild(script);
-    setZoneStatus(id, '용도지역 조회 시간 초과', false);
-  }, 8000);
-
-  window[cbName] = function(data) {
-    clearTimeout(timer);
-    delete window[cbName];
-    if (script.parentNode) script.parentNode.removeChild(script);
-    try {
+  fetch(url)
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function(data) {
       var features = data && data.features;
       if (!features || features.length === 0) {
         setZoneStatus(id, '용도지역 정보 없음', false); return;
       }
-
-      // 좌표에 가장 가까운 feature 선택 (면적 작은 것 우선 = 더 세밀한 용도지역)
-      var bestZone = '';
-      var bestArea = Infinity;
+      // bbox 면적 가장 작은 feature 선택 (가장 세밀한 용도지역)
+      var bestZone = '', bestArea = Infinity;
       for (var i = 0; i < features.length; i++) {
-        var p = features[i].properties || {};
-        var name = p.uname || '';
+        var name = (features[i].properties || {}).uname || '';
         if (!name || name === 'null') continue;
-        // bbox 면적으로 가장 작은(세밀한) 구역 선택
         var bbox = features[i].bbox;
         var area = bbox ? (bbox[2]-bbox[0]) * (bbox[3]-bbox[1]) : Infinity;
         if (area < bestArea) { bestArea = area; bestZone = name; }
       }
-
-      if (!bestZone) {
-        setZoneStatus(id, '용도지역 정보 없음', false); return;
-      }
+      if (!bestZone) { setZoneStatus(id, '용도지역 정보 없음', false); return; }
 
       var bcr = ZONE_BCR[bestZone];
       if (bcr !== undefined) {
@@ -253,16 +238,11 @@ function fetchZoneAndBCR(id, lat, lng) {
       } else {
         setZoneStatus(id, '용도지역: ' + bestZone + ' (건폐율 직접 입력)', false);
       }
-    } catch(e) {
-      setZoneStatus(id, '용도지역 파싱 오류', false);
-    }
-  };
-
-  script.onerror = function() {
-    delete window[cbName];
-    setZoneStatus(id, '용도지역 조회 실패', false);
-  };
-  document.body.appendChild(script);
+    })
+    .catch(function(e) {
+      // fetch 실패 시 CORS 차단 → 토지이음 링크로 안내
+      setZoneStatus(id, '용도지역 자동조회 불가 — 토지이음에서 확인 후 직접 입력해주세요.', false);
+    });
 }
 function setZoneStatus(id, msg, ok) {
   var el = document.getElementById('zone-msg-' + id);
