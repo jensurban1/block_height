@@ -37,13 +37,13 @@
   .block-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
   .block-inputs { min-width: 0; }
   .map-panel { display: flex; flex-direction: column; gap: 8px; }
-  .map-wrap { border-radius: 8px; overflow: hidden; border: 1px solid var(--border-light); height: 300px; background: var(--bg); }
+  .map-wrap { border-radius: 8px; overflow: hidden; border: 1px solid var(--border-light); height: 280px; background: var(--bg); position: relative; }
   .map-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-hint); text-align: center; line-height: 1.8; }
+  .leaflet-map { width: 100%; height: 100%; }
   .map-tools { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tool-btn { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; white-space: nowrap; }
+  .tool-btn { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; }
   .tool-btn:hover { background: var(--bg); }
   .tool-btn.active { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
-  .tool-btn.layer-on { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); }
   .measure-result { font-size: 12px; color: var(--warn); background: var(--warn-bg); border-radius: 5px; padding: 6px 10px; display: none; }
   .measure-result.show { display: block; }
   .addr-section { margin-bottom: 18px; }
@@ -78,6 +78,9 @@
   .summary-metric-value { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; }
   .summary-metric-value.big { color: var(--accent); font-size: 24px; }
   .summary-metric-unit { font-size: 11px; color: var(--text-hint); font-family: 'Noto Sans KR', sans-serif; }
+  .eum-btn { display:none; font-size:11px; font-family:'Noto Sans KR',sans-serif; font-weight:500; padding:7px 12px; border-radius:5px; border:1px solid var(--accent); background:var(--accent-bg); color:var(--accent-text); cursor:pointer; text-decoration:none; text-align:center; width:100%; }
+  .eum-btn:hover { background:var(--accent); color:#fff; }
+  .eum-btn.show { display:block; }
   @media (max-width: 750px) {
     .block-layout { grid-template-columns: 1fr; }
     .inputs-grid { grid-template-columns: 1fr 1fr; }
@@ -113,125 +116,95 @@
 </div>
 
 <script>
-var VWORLD_KEY = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
 
-// ── 지도 초기화 ────────────────────────────────────
+// ── Nominatim으로 주소 → 좌표 변환 ────────────────
+function geocodeAndShowMap(id, address, label) {
+  var url = 'https://nominatim.openstreetmap.org/search?format=json&q='
+    + encodeURIComponent(address) + '&limit=1&accept-language=ko';
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data || data.length === 0) {
+        // Nominatim 실패시 카카오 geocoder로 좌표만 받아서 지도 표시
+        showMapFallback(id, label);
+        return;
+      }
+      initLeafletMap(id, parseFloat(data[0].lat), parseFloat(data[0].lon), label);
+    })
+    .catch(function() { showMapFallback(id, label); });
+}
+
+function showMapFallback(id, label) {
+  // 서울 중심으로 기본 지도 표시
+  initLeafletMap(id, 37.5665, 126.9780, label);
+}
+
+// ── Leaflet 지도 초기화 ────────────────────────────
 function initLeafletMap(id, lat, lng, label) {
   var wrap = document.getElementById('map-' + id);
   if (!wrap) return;
   wrap.innerHTML = '<div id="leaflet-' + id + '" style="width:100%;height:100%;"></div>';
 
   setTimeout(function() {
-    var map = L.map('leaflet-' + id, { zoomControl: true }).setView([lat, lng], 17);
-
-    // 기본 레이어: vworld 배경지도
-    var baseLayer = L.tileLayer(
-      'https://api.vworld.kr/req/wmts/1.0.0/' + VWORLD_KEY + '/Base/{z}/{y}/{x}.png',
-      { maxZoom: 19, attribution: '© vworld' }
-    );
-
-    // 위성 레이어
-    var satLayer = L.tileLayer(
-      'https://api.vworld.kr/req/wmts/1.0.0/' + VWORLD_KEY + '/Satellite/{z}/{y}/{x}.jpeg',
-      { maxZoom: 19, attribution: '© vworld' }
-    );
-
-    // 지적도 WMS 레이어 (vworld)
-    var cadastralLayer = L.tileLayer.wms(
-      'https://api.vworld.kr/req/wms?KEY=' + VWORLD_KEY + '&DOMAIN=jensurban1.github.io',
-      {
-        layers: 'lt_c_landinfobasemap',
-        format: 'image/png',
-        transparent: true,
-        opacity: 0.7,
-        attribution: '© 국토정보플랫폼'
-      }
-    );
-
-    // OSM 폴백 (vworld 안될 경우)
-    var osmLayer = L.tileLayer(
-      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      { maxZoom: 19, attribution: '© OpenStreetMap' }
-    );
-
-    // 기본 레이어 추가 (vworld 실패시 OSM으로 폴백)
-    baseLayer.on('tileerror', function() {
-      if (!map.hasLayer(osmLayer)) osmLayer.addTo(map);
-    });
-    baseLayer.addTo(map);
+    var map = L.map('leaflet-' + id).setView([lat, lng], 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19
+    }).addTo(map);
 
     // 마커
     var marker = L.marker([lat, lng]).addTo(map);
-    marker.bindPopup('<b>' + label + '</b>').openPopup();
+    marker.bindPopup(label).openPopup();
 
-    mapObjs[id] = {
-      map: map,
-      baseLayer: baseLayer,
-      satLayer: satLayer,
-      cadastralLayer: cadastralLayer,
-      osmLayer: osmLayer,
-      cadastralOn: false,
-      satOn: false
-    };
-    measureState[id] = { on: false, points: [], polyline: null, markers: [], clickFn: null };
+    mapObjs[id] = { map: map, marker: marker };
+    measureState[id] = { on: false, points: [], polyline: null, markers: [] };
 
+    // 지도 크기 재계산 (overflow hidden 안에 있을 때 필요)
     map.invalidateSize();
   }, 100);
 }
 
-// ── 지적도 토글 ───────────────────────────────────
-function toggleCadastral(id) {
-  var obj = mapObjs[id];
-  if (!obj) return;
-  var btn = document.getElementById('cadastral-btn-' + id);
-  if (obj.cadastralOn) {
-    obj.map.removeLayer(obj.cadastralLayer);
-    obj.cadastralOn = false;
-    btn.classList.remove('layer-on');
-    btn.textContent = '지적도';
-  } else {
-    obj.cadastralLayer.addTo(obj.map);
-    obj.cadastralOn = true;
-    btn.classList.add('layer-on');
-    btn.textContent = '지적도 ON';
-  }
-}
-
-// ── 위성지도 토글 ─────────────────────────────────
-function toggleSatellite(id) {
-  var obj = mapObjs[id];
-  if (!obj) return;
-  var btn = document.getElementById('sat-btn-' + id);
-  if (obj.satOn) {
-    obj.map.removeLayer(obj.satLayer);
-    if (!obj.map.hasLayer(obj.baseLayer)) obj.baseLayer.addTo(obj.map);
-    obj.satOn = false;
-    btn.classList.remove('layer-on');
-    btn.textContent = '위성';
-  } else {
-    obj.map.removeLayer(obj.baseLayer);
-    obj.satLayer.addTo(obj.map);
-    obj.satOn = true;
-    btn.classList.add('layer-on');
-    btn.textContent = '위성 ON';
-  }
+// ── 주소 검색 ─────────────────────────────────────
+function openAddressSearch(id) {
+  new daum.Postcode({
+    oncomplete: function(data) {
+      var jibun = data.jibunAddress || data.autoJibunAddress || '';
+      var display = jibun || data.roadAddress;
+      document.getElementById('addr-' + id).value = display;
+      var nm = document.getElementById('name-' + id);
+      if (!nm.value) nm.value = (data.bname || '') + ' ' + (data.jibun || '');
+      var msg = document.getElementById('msg-' + id);
+      msg.className = 'status-msg status-ok';
+      msg.textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
+      var eumBtn = document.getElementById('eum-btn-' + id);
+      if (eumBtn) {
+        eumBtn.href = 'https://www.eum.go.kr/web/am/amSearch.jsp?address=' + encodeURIComponent(display);
+        eumBtn.className = 'eum-btn show';
+      }
+      var label = (data.bname || '') + ' ' + (data.jibun || '');
+      geocodeAndShowMap(id, display, label);
+    }
+  }).open();
 }
 
 // ── 거리재기 ──────────────────────────────────────
 function toggleMeasure(id) {
   if (!mapObjs[id]) return;
-  var st = measureState[id], map = mapObjs[id].map;
+  var st = measureState[id];
+  var map = mapObjs[id].map;
   var btn = document.getElementById('measure-btn-' + id);
   var res = document.getElementById('measure-result-' + id);
 
   if (st.on) {
+    // 측정 종료
     st.on = false;
     btn.classList.remove('active');
     btn.textContent = '거리재기';
     map.off('click', st.clickFn);
     map.getContainer().style.cursor = '';
   } else {
+    // 측정 시작
     clearMeasure(id);
     st.on = true;
     btn.classList.add('active');
@@ -242,16 +215,24 @@ function toggleMeasure(id) {
     st.clickFn = function(e) {
       var ll = e.latlng;
       st.points.push(ll);
-      st.markers.push(
-        L.circleMarker(ll, { radius: 4, color: '#b45309', fillColor: '#b45309', fillOpacity: 1, weight: 1 }).addTo(map)
-      );
+
+      // 점 마커
+      var dot = L.circleMarker(ll, {
+        radius: 4, color: '#b45309', fillColor: '#b45309', fillOpacity: 1, weight: 1
+      }).addTo(map);
+      st.markers.push(dot);
+
+      // 선 업데이트
       if (st.polyline) map.removeLayer(st.polyline);
       if (st.points.length >= 2) {
         st.polyline = L.polyline(st.points, { color: '#b45309', weight: 2, opacity: 0.9 }).addTo(map);
+        // 거리 계산 (미터)
         var dist = 0;
-        for (var i = 1; i < st.points.length; i++) dist += st.points[i-1].distanceTo(st.points[i]);
+        for (var i = 1; i < st.points.length; i++) {
+          dist += st.points[i-1].distanceTo(st.points[i]);
+        }
         res.className = 'measure-result show';
-        res.textContent = '총 거리: ' + dist.toFixed(1) + ' m  (점 ' + st.points.length + '개)';
+        res.textContent = '총 거리: ' + dist.toFixed(1) + ' m';
       }
     };
     map.on('click', st.clickFn);
@@ -274,34 +255,6 @@ function resetMeasure(id) {
   clearMeasure(id);
   var res = document.getElementById('measure-result-' + id);
   if (res) res.className = 'measure-result';
-}
-
-// ── 주소 검색 ─────────────────────────────────────
-function openAddressSearch(id) {
-  new daum.Postcode({
-    oncomplete: function(data) {
-      var jibun = data.jibunAddress || data.autoJibunAddress || '';
-      var display = jibun || data.roadAddress;
-      document.getElementById('addr-' + id).value = display;
-      var nm = document.getElementById('name-' + id);
-      if (!nm.value) nm.value = (data.bname || '') + ' ' + (data.jibun || '');
-      document.getElementById('msg-' + id).className = 'status-msg status-ok';
-      document.getElementById('msg-' + id).textContent = '✓ 주소 선택 완료 — 대지면적을 직접 입력해주세요.';
-
-      var label = (data.bname || '') + ' ' + (data.jibun || '');
-      // Nominatim으로 좌표 변환
-      fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(display) + '&limit=1&accept-language=ko')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (d && d.length > 0) {
-            initLeafletMap(id, parseFloat(d[0].lat), parseFloat(d[0].lon), label);
-          } else {
-            initLeafletMap(id, 37.5665, 126.9780, label);
-          }
-        })
-        .catch(function() { initLeafletMap(id, 37.5665, 126.9780, label); });
-    }
-  }).open();
 }
 
 // ── 구역 카드 생성 ────────────────────────────────
@@ -364,9 +317,8 @@ function addBlock() {
     + '</div>'
     + '<div class="map-panel">'
     +   '<div class="map-wrap"><div id="map-' + id + '" class="map-placeholder">주소를 검색하면<br>지도가 표시됩니다</div></div>'
+    +   '<a class="eum-btn" id="eum-btn-' + id + '" target="_blank" href="#">토지이음에서 지적도 보기 ↗</a>'
     +   '<div class="map-tools">'
-    +     '<button class="tool-btn" id="cadastral-btn-' + id + '" onclick="toggleCadastral(' + id + ')">지적도</button>'
-    +     '<button class="tool-btn" id="sat-btn-' + id + '" onclick="toggleSatellite(' + id + ')">위성</button>'
     +     '<button class="tool-btn" id="measure-btn-' + id + '" onclick="toggleMeasure(' + id + ')">거리재기</button>'
     +     '<button class="tool-btn" onclick="resetMeasure(' + id + ')">초기화</button>'
     +   '</div>'
@@ -379,7 +331,7 @@ function addBlock() {
 function removeBlock(id) {
   blocks = blocks.filter(function(b) { return b !== id; });
   if (measureState[id] && measureState[id].on) toggleMeasure(id);
-  if (mapObjs[id]) mapObjs[id].map.remove();
+  if (mapObjs[id]) { mapObjs[id].map.remove(); }
   delete mapObjs[id]; delete measureState[id];
   var el = document.getElementById('block-' + id);
   if (el) el.remove();
@@ -387,53 +339,56 @@ function removeBlock(id) {
 }
 
 function setMode(id, mode) {
-  document.getElementById('tag-single-' + id).className = 'mode-btn' + (mode==='single' ? ' active' : '');
-  document.getElementById('tag-both-' + id).className = 'mode-btn' + (mode==='both' ? ' active' : '');
-  document.getElementById('longside-' + id).style.display = mode==='both' ? 'block' : 'none';
+  document.getElementById('tag-single-' + id).className = 'mode-btn' + (mode === 'single' ? ' active' : '');
+  document.getElementById('tag-both-' + id).className = 'mode-btn' + (mode === 'both' ? ' active' : '');
+  document.getElementById('longside-' + id).style.display = mode === 'both' ? 'block' : 'none';
   calc(id);
 }
 function getMode(id) { return document.getElementById('tag-both-' + id).classList.contains('active') ? 'both' : 'single'; }
-function v(eid) { var el = document.getElementById(eid); return el ? parseFloat(el.value)||0 : 0; }
+function v(eid) { var el = document.getElementById(eid); return el ? parseFloat(el.value) || 0 : 0; }
 function calcSide(road, front, width, rear) {
-  var d=width-front, mn=(road+front)*1.5, mx=(road+front+d-rear)*1.5;
-  return { minPt:mn, maxPt:mx, avgPt:(mn+mx)/2 };
+  var d = width - front, mn = (road + front) * 1.5, mx = (road + front + d - rear) * 1.5;
+  return { minPt: mn, maxPt: mx, avgPt: (mn + mx) / 2 };
 }
 function calc(id) {
-  var area=v('area-'+id), bcr=v('bcr-'+id)/100, rear=v('rear-'+id), mode=getMode(id);
-  var rs=calcSide(v('road-s-'+id),v('front-s-'+id),v('width-s-'+id),rear);
+  var area = v('area-'+id), bcr = v('bcr-'+id)/100, rear = v('rear-'+id), mode = getMode(id);
+  var rs = calcSide(v('road-s-'+id), v('front-s-'+id), v('width-s-'+id), rear);
   var minVal, dMin, dMax, dAvg;
-  if (mode==='both') {
-    var rl=calcSide(v('road-l-'+id),v('front-l-'+id),v('width-l-'+id),rear);
-    minVal=Math.min(rs.avgPt,rl.avgPt); dMin=Math.min(rs.minPt,rl.minPt);
-    dMax=Math.max(rs.maxPt,rl.maxPt); dAvg=(rs.avgPt+rl.avgPt)/2;
-  } else { minVal=rs.avgPt; dMin=rs.minPt; dMax=rs.maxPt; dAvg=rs.avgPt; }
-  var floor=area*bcr, vol=floor*minVal;
-  var fmt=function(n){return n>0?n.toFixed(1):'—';};
-  var fmt0=function(n){return n>0?Math.round(n).toLocaleString():'—';};
-  var u=function(s){return '<span class="metric-unit">'+s+'</span>';};
-  document.getElementById('r-min-'+id).innerHTML   =fmt(dMin)  +(dMin  >0?u('m'):'');
-  document.getElementById('r-max-'+id).innerHTML   =fmt(dMax)  +(dMax  >0?u('m'):'');
-  document.getElementById('r-avg-'+id).innerHTML   =fmt(dAvg)  +(dAvg  >0?u('m'):'');
-  document.getElementById('r-minval-'+id).innerHTML=fmt(minVal)+(minVal>0?u('m'):'');
-  document.getElementById('r-floor-'+id).innerHTML =fmt(floor) +(floor >0?u('㎡'):'');
-  document.getElementById('r-vol-'+id).innerHTML   =fmt0(vol)  +(vol   >0?u('㎡'):'');
+  if (mode === 'both') {
+    var rl = calcSide(v('road-l-'+id), v('front-l-'+id), v('width-l-'+id), rear);
+    minVal = Math.min(rs.avgPt, rl.avgPt); dMin = Math.min(rs.minPt, rl.minPt);
+    dMax = Math.max(rs.maxPt, rl.maxPt); dAvg = (rs.avgPt + rl.avgPt) / 2;
+  } else { minVal = rs.avgPt; dMin = rs.minPt; dMax = rs.maxPt; dAvg = rs.avgPt; }
+  var floor = area * bcr, vol = floor * minVal;
+  var fmt = function(n) { return n > 0 ? n.toFixed(1) : '—'; };
+  var fmt0 = function(n) { return n > 0 ? Math.round(n).toLocaleString() : '—'; };
+  var u = function(s) { return '<span class="metric-unit">'+s+'</span>'; };
+  document.getElementById('r-min-'+id).innerHTML    = fmt(dMin)   + (dMin   > 0 ? u('m')  : '');
+  document.getElementById('r-max-'+id).innerHTML    = fmt(dMax)   + (dMax   > 0 ? u('m')  : '');
+  document.getElementById('r-avg-'+id).innerHTML    = fmt(dAvg)   + (dAvg   > 0 ? u('m')  : '');
+  document.getElementById('r-minval-'+id).innerHTML = fmt(minVal) + (minVal > 0 ? u('m')  : '');
+  document.getElementById('r-floor-'+id).innerHTML  = fmt(floor)  + (floor  > 0 ? u('㎡') : '');
+  document.getElementById('r-vol-'+id).innerHTML    = fmt0(vol)   + (vol    > 0 ? u('㎡') : '');
   updateSummary();
 }
 function updateSummary() {
-  var tA=0,tF=0,tV=0,valid=false;
-  blocks.forEach(function(id){
-    var area=v('area-'+id),bcr=v('bcr-'+id)/100,rear=v('rear-'+id);
+  var tA=0, tF=0, tV=0, valid=false;
+  blocks.forEach(function(id) {
+    var area=v('area-'+id), bcr=v('bcr-'+id)/100, rear=v('rear-'+id);
     var rs=calcSide(v('road-s-'+id),v('front-s-'+id),v('width-s-'+id),rear);
     var minVal=rs.avgPt;
-    if(getMode(id)==='both'){var rl=calcSide(v('road-l-'+id),v('front-l-'+id),v('width-l-'+id),rear);minVal=Math.min(rs.avgPt,rl.avgPt);}
-    var f=area*bcr,vol=f*minVal;
-    if(area>0&&minVal>0){tA+=area;tF+=f;tV+=vol;valid=true;}
+    if (getMode(id)==='both') {
+      var rl=calcSide(v('road-l-'+id),v('front-l-'+id),v('width-l-'+id),rear);
+      minVal=Math.min(rs.avgPt,rl.avgPt);
+    }
+    var f=area*bcr, vol=f*minVal;
+    if (area>0 && minVal>0) { tA+=area; tF+=f; tV+=vol; valid=true; }
   });
-  var avgH=tF>0?tV/tF:0;
-  document.getElementById('sum-area').textContent  =valid?Math.round(tA).toLocaleString():'—';
-  document.getElementById('sum-floor').textContent =valid?Math.round(tF).toLocaleString():'—';
-  document.getElementById('sum-vol').textContent   =valid?Math.round(tV).toLocaleString():'—';
-  document.getElementById('avg-height').textContent=valid?avgH.toFixed(1):'—';
+  var avgH = tF>0 ? tV/tF : 0;
+  document.getElementById('sum-area').textContent  = valid ? Math.round(tA).toLocaleString() : '—';
+  document.getElementById('sum-floor').textContent = valid ? Math.round(tF).toLocaleString() : '—';
+  document.getElementById('sum-vol').textContent   = valid ? Math.round(tV).toLocaleString() : '—';
+  document.getElementById('avg-height').textContent= valid ? avgH.toFixed(1) : '—';
 }
 
 addBlock();
