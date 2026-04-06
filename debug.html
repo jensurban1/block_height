@@ -202,14 +202,13 @@ function fetchZoneAndBCR(id, lat, lng) {
   var url = 'https://api.vworld.kr/req/data?service=data&version=2.0&request=GetFeature'
     + '&key=' + KEY2
     + '&domain=jensurban1.github.io'
-    + '&data=LT_C_UQ111'
+    + '&data=LT_C_UQ113'
     + '&geometry=false'
     + '&attribute=true'
     + '&geomfilter=POINT(' + lng + ' ' + lat + ')'
     + '&format=json'
     + '&callback=' + cbName;
 
-  console.log('[용도지역 WFS URL]', url);
   var script = document.createElement('script');
   script.src = url;
 
@@ -231,12 +230,22 @@ function fetchZoneAndBCR(id, lat, lng) {
         setZoneStatus(id, '용도지역 정보 없음', false); return;
       }
       var props = features[0].properties;
-      console.log('[용도지역 WFS] 전체 properties:', JSON.stringify(props));
-      var zoneName = props.uq111 || props.UQ111 || props.prpos_area_dstrc_nm || '';
+      console.log('[용도지역 WFS] properties:', JSON.stringify(props));
+      // LT_C_UQ113 주요 키 시도
+      var zoneName = props.uq113 || props.UQ113
+        || props.prpos_area_dstrc_nm || props.PRPOS_AREA_DSTRC_NM
+        || props.uname || props.UNAME
+        || props.jiyuk_nm || props.JIYUK_NM
+        || props.prpos_nm || props.PRPOS_NM
+        || '';
+      // 그래도 없으면 '지역' 포함 값 자동 탐색
       if (!zoneName) {
-        for (var k in props) { if (props[k] && typeof props[k] === 'string' && props[k].indexOf('지역') > -1) { zoneName = props[k]; break; } }
+        for (var k in props) {
+          if (props[k] && typeof props[k] === 'string' && props[k].indexOf('지역') > -1) {
+            zoneName = props[k]; break;
+          }
+        }
       }
-      console.log('[용도지역] zoneName:', zoneName);
       var bcr = ZONE_BCR[zoneName];
       if (bcr !== undefined) {
         document.getElementById('bcr-' + id).value = bcr;
