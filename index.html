@@ -37,7 +37,7 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .remove-btn { font-size: 11px; color: var(--text-hint); background: none; border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
 .remove-btn:hover { color: var(--danger); border-color: var(--danger); }
 
-.block-body { display: grid; grid-template-columns: 200px 1fr 300px; align-items: stretch; }
+.block-body { display: grid; grid-template-columns: 210px 1fr 300px; align-items: stretch; }
 .col-addr { padding: 14px; border-right: 1px solid var(--border-light); display: flex; flex-direction: column; }
 .col-inputs { padding: 14px; border-right: 1px solid var(--border-light); }
 .col-map { display: flex; flex-direction: column; }
@@ -51,17 +51,18 @@ header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', 
 .ext-btn:hover { background: var(--bg); }
 .ext-btn.show, .copy-btn.show { display: block; }
 
-.converter-wrap { border-top: 1px dashed var(--border); padding-top: 10px; margin-top: auto; }
-.converter-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 6px; }
-.converter-input-row { display: flex; gap: 4px; margin-bottom: 5px; }
-.converter-input { flex: 1; font-size: 11px; font-family: 'Noto Sans KR', sans-serif; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; outline: none; min-width: 0; }
+/* [수정3] 지번→도로명 변환기 크기 개선 */
+.converter-wrap { border-top: 1px dashed var(--border); padding-top: 12px; margin-top: auto; }
+.converter-label { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--text-sub); margin-bottom: 8px; }
+.converter-input-row { display: flex; gap: 5px; margin-bottom: 6px; }
+.converter-input { flex: 1; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 7px 8px; outline: none; min-width: 0; }
 .converter-input:focus { border-color: var(--accent); }
-.converter-btn { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--text-sub); border: none; border-radius: 6px; padding: 5px 9px; cursor: pointer; white-space: nowrap; }
+.converter-btn { font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--text-sub); border: none; border-radius: 6px; padding: 7px 11px; cursor: pointer; white-space: nowrap; }
 .converter-btn:hover { background: var(--text); }
-.converter-result { font-size: 10px; line-height: 1.5; padding: 6px 8px; border-radius: 5px; word-break: break-all; display: none; }
+.converter-result { font-size: 11px; line-height: 1.6; padding: 7px 9px; border-radius: 6px; word-break: break-all; display: none; }
 .converter-result.ok  { background: var(--success-bg); color: var(--success); display: block; }
 .converter-result.err { background: var(--warn-bg); color: var(--warn); display: block; }
-.converter-copy { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; margin-top: 4px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; width: 100%; display: none; }
+.converter-copy { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; margin-top: 5px; padding: 5px 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; width: 100%; display: none; }
 .converter-copy.show { display: block; }
 .converter-copy:hover { background: var(--bg); }
 
@@ -83,11 +84,13 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 
 .map-wrap { flex: 1; }
 .map-placeholder { display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-hint); text-align: center; line-height: 1.8; background: var(--bg); height: 280px; }
-.map-tools { display: flex; gap: 5px; padding: 6px 8px; background: var(--surface); border-top: 1px solid var(--border-light); flex-wrap: wrap; }
-.tool-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; }
+
+/* [수정2] 지도 툴바 및 거리재기 결과 크기 개선 */
+.map-tools { display: flex; gap: 6px; padding: 7px 10px; background: var(--surface); border-top: 1px solid var(--border-light); flex-wrap: wrap; align-items: center; }
+.tool-btn { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; }
 .tool-btn.active { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
 .tool-btn.layer-on { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); }
-.measure-result { font-size: 10px; color: var(--warn); padding: 0 8px 6px; display: none; font-family: 'DM Mono', monospace; }
+.measure-result { font-size: 12px; font-weight: 600; color: var(--warn); padding: 2px 10px 7px; display: none; font-family: 'DM Mono', monospace; }
 .measure-result.show { display: block; }
 
 .summary-title { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 14px; }
@@ -145,11 +148,9 @@ var VKEY     = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 var JUSO_KEY = 'U01TX0FVVEgyMDI2MDQwNzE0MzkwODExNzg2NTc=';
 var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
 var MAP_H = 280;
-
-// ── PNU 저장소 ────────────────────────────────────────
 var pnuStore = {};
 
-// ── 토지이음 해당 필지 직접 이동 ─────────────────────
+// ── 토지이음 필지 직접 이동 ───────────────────────────
 function openEum(id) {
   var pnu = pnuStore[id] || '';
   var form = document.createElement('form');
@@ -165,7 +166,6 @@ function openEum(id) {
 }
 
 // ── 행안부 주소검색 API ───────────────────────────────
-// [수정3] 지번/도로명 구분 없이 keyword 그대로 전달 → 행안부가 알아서 처리
 function jusoSearch(keyword, callback) {
   var url = 'https://business.juso.go.kr/addrlink/addrLinkApi.do'
     + '?confmKey=' + JUSO_KEY
@@ -183,15 +183,12 @@ function jusoSearch(keyword, callback) {
 }
 
 // ── Nominatim Geocoding ───────────────────────────────
-// [수정2] zipNo(우편번호) 포함 쿼리로 정확도 개선
 function nominatimGeocode(query, zipNo, callback) {
-  // zipNo 있으면 postalcode 파라미터 추가
-  var base = 'https://nominatim.openstreetmap.org/search'
+  var url = 'https://nominatim.openstreetmap.org/search'
     + '?format=json&limit=3&countrycodes=kr&addressdetails=1'
     + '&q=' + encodeURIComponent('대한민국 ' + query);
-  if (zipNo) base += '&postalcode=' + zipNo;
-
-  fetch(base, { headers: { 'Accept-Language': 'ko' } })
+  if (zipNo) url += '&postalcode=' + zipNo;
+  fetch(url, { headers: { 'Accept-Language': 'ko' } })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var kr = (data || []).filter(function(r) { return r.address && r.address.country_code === 'kr'; });
@@ -202,35 +199,44 @@ function nominatimGeocode(query, zipNo, callback) {
     .catch(function() { callback(null, null); });
 }
 
-// ── 주소검색 + PNU저장 + Geocoding 통합 처리 ─────────
-// [수정1] jusoSearch를 한 번만 호출하여 PNU저장과 roadAddr 취득을 동시에 처리
-// geocode는 jusoSearch 콜백 안에서 순서대로 실행 → 타이밍 문제 해결
-function resolveAddress(road, jibun, onMapReady, onFail, blockId) {
-  var keyword = road || jibun;
+// ── 주소 처리 통합 함수 ───────────────────────────────
+// [수정1] daum.Postcode의 data.x/y(건물 좌표) 우선 사용
+//         값이 없거나 0이면 행안부 API → Nominatim 순으로 폴백
+function resolveAddress(road, jibun, daumX, daumY, onMapReady, onFail, blockId) {
+  // daum.Postcode x/y가 유효한 좌표면 즉시 사용 (가장 정확)
+  var lat = parseFloat(daumY), lng = parseFloat(daumX);
+  if (lat && lng && lat !== 0 && lng !== 0) {
+    // PNU는 행안부 API로 별도 취득 (비동기, 지도 표시와 무관)
+    jusoSearch(road || jibun, function(juso) {
+      if (juso && juso.admCd) {
+        pnuStore[blockId] = juso.admCd
+          + juso.mtYn
+          + String(juso.lnbrMnnm).padStart(4, '0')
+          + String(juso.lnbrSlno).padStart(4, '0');
+      }
+    });
+    onMapReady(lat, lng);
+    return;
+  }
 
-  jusoSearch(keyword, function(juso, err) {
-    // PNU 저장 (juso 응답에서 바로)
+  // daum 좌표 없음 → 행안부 API + Nominatim
+  jusoSearch(road || jibun, function(juso) {
     if (juso && juso.admCd) {
       pnuStore[blockId] = juso.admCd
         + juso.mtYn
         + String(juso.lnbrMnnm).padStart(4, '0')
         + String(juso.lnbrSlno).padStart(4, '0');
     }
-
-    // Geocoding용 주소: roadAddrPart1 우선, 없으면 원본 road, 없으면 jibun
     var geoAddr = (juso && juso.roadAddrPart1) || road || jibun;
     var zipNo   = (juso && juso.zipNo) || '';
 
-    // 1차: 도로명 + 우편번호
-    nominatimGeocode(geoAddr, zipNo, function(lat, lng) {
-      if (lat && lng) { onMapReady(lat, lng); return; }
-      // 2차: 지번 + 우편번호
-      nominatimGeocode(jibun, zipNo, function(lat2, lng2) {
-        if (lat2 && lng2) { onMapReady(lat2, lng2); return; }
-        // 3차: 동 단위 rough fallback
+    nominatimGeocode(geoAddr, zipNo, function(lat2, lng2) {
+      if (lat2 && lng2) { onMapReady(lat2, lng2); return; }
+      nominatimGeocode(jibun, zipNo, function(lat3, lng3) {
+        if (lat3 && lng3) { onMapReady(lat3, lng3); return; }
         var rough = (road || jibun).split(' ').slice(0, 3).join(' ');
-        nominatimGeocode(rough, '', function(lat3, lng3) {
-          if (lat3 && lng3) onMapReady(lat3, lng3);
+        nominatimGeocode(rough, '', function(lat4, lng4) {
+          if (lat4 && lng4) onMapReady(lat4, lng4);
           else onFail();
         });
       });
@@ -244,22 +250,22 @@ function initMap(id, lat, lng, label) {
     try { mapObjs[id].map.remove(); } catch(e) {}
     delete mapObjs[id];
   }
-
   var wrap = document.getElementById('map-' + id);
   if (!wrap) return;
   wrap.innerHTML = '<div id="lmap-' + id + '" style="width:100%;height:' + MAP_H + 'px;"></div>';
 
-  var map = L.map('lmap-' + id, { center: [lat, lng], zoom: 17 });
+  // [수정4] maxNativeZoom:19, maxZoom:21 → 타일 업스케일로 2레벨 추가 확대
+  var map = L.map('lmap-' + id, { center: [lat, lng], zoom: 17, maxZoom: 21 });
 
   L.tileLayer(
     'https://api.vworld.kr/req/wmts/1.0.0/' + VKEY + '/Base/{z}/{y}/{x}.png',
-    { attribution: '© <a href="https://www.vworld.kr">VWorld</a>', maxZoom: 19 }
+    { attribution: '© <a href="https://www.vworld.kr">VWorld</a>', maxNativeZoom: 19, maxZoom: 21 }
   ).addTo(map);
 
   var cadastralLayer = L.tileLayer.wms('https://api.vworld.kr/req/wms', {
     layers: 'lt_c_landinfobasemap',
     styles: '', format: 'image/png', transparent: true,
-    version: '1.3.0', key: VKEY, maxZoom: 19, attribution: '© VWorld'
+    version: '1.3.0', key: VKEY, maxZoom: 21, attribution: '© VWorld'
   }).addTo(map);
 
   var marker = L.marker([lat, lng]).addTo(map);
@@ -268,7 +274,6 @@ function initMap(id, lat, lng, label) {
   mapObjs[id] = { map: map, cadastralLayer: cadastralLayer, marker: marker, cadastralOn: true };
   measureState[id] = { on: false, points: [], dotMarkers: [], polyline: null, previewLine: null, clickFn: null, moveFn: null };
 
-  // 지적도 토글
   document.getElementById('cadastral-btn-' + id).onclick = function() {
     var obj = mapObjs[id]; var btn = this;
     if (obj.cadastralOn) {
@@ -280,7 +285,6 @@ function initMap(id, lat, lng, label) {
     }
   };
 
-  // 거리재기
   document.getElementById('measure-btn-' + id).onclick = function() {
     var st = measureState[id]; var btn = this;
     var res = document.getElementById('measure-result-' + id);
@@ -294,7 +298,6 @@ function initMap(id, lat, lng, label) {
       btn.classList.add('active'); btn.textContent = '측정 종료';
       res.className = 'measure-result';
       map.getContainer().style.cursor = 'crosshair';
-
       st.clickFn = function(e) {
         st.points.push(e.latlng);
         var dot = L.circleMarker(e.latlng, { radius: 4, color: '#b45309', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(map);
@@ -305,7 +308,7 @@ function initMap(id, lat, lng, label) {
           var dist = 0;
           for (var i = 1; i < st.points.length; i++) dist += st.points[i-1].distanceTo(st.points[i]);
           res.className = 'measure-result show';
-          res.textContent = '총 거리: ' + dist.toFixed(1) + ' m  |  구간: ' + (st.points.length - 1) + '개';
+          res.textContent = '▸ ' + dist.toFixed(1) + ' m  ·  ' + (st.points.length - 1) + '구간';
         }
       };
       st.moveFn = function(e) {
@@ -367,8 +370,8 @@ function openAddressSearch(id) {
       var wrap = document.getElementById('map-' + id);
       if (wrap) wrap.innerHTML = '<div class="map-placeholder" style="height:' + MAP_H + 'px;">좌표 검색 중...</div>';
 
-      // [수정1] resolveAddress로 통합: PNU저장 + geocoding 순서 보장
-      resolveAddress(road, jibun,
+      // [수정1] data.x(경도), data.y(위도) 전달 → 있으면 즉시 사용
+      resolveAddress(road, jibun, data.x, data.y,
         function(lat, lng) { initMap(id, lat, lng, label); },
         function() { showGeoError(id); },
         id
@@ -482,7 +485,7 @@ function addBlock() {
         + '<a class="ext-btn" id="seoul-btn-' + id + '" target="_blank" href="https://urban.seoul.go.kr/view/map/main.html">서울도시공간포털 ↗</a>'
       + '</div>'
       + '<div class="converter-wrap">'
-        + '<div class="converter-label">지번 → 도로명</div>'
+        + '<div class="converter-label">지번 → 도로명 변환</div>'
         + '<div class="converter-input-row">'
           + '<input class="converter-input" type="text" id="conv-input-' + id + '" placeholder="예: 역삼동 689-14"'
           + ' onkeydown="if(event.key===\'Enter\')runConvert(' + id + ')">'
