@@ -343,6 +343,24 @@ function showGeoError(id) {
 }
 
 // ── 주소 검색 ─────────────────────────────────────────
+// PNU 저장소 (카드 id → PNU)
+var pnuStore = {};
+
+// 토지이음 해당 필지로 직접 이동 (POST submit)
+function openEum(id) {
+  var pnu = pnuStore[id];
+  var form = document.createElement('form');
+  form.method = 'post';
+  form.action = 'https://www.eum.go.kr/web/ar/lu/luLandDet.jsp';
+  form.target = '_blank';
+  var input = document.createElement('input');
+  input.type = 'hidden'; input.name = 'pnu'; input.value = pnu || '';
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+}
+
 function openAddressSearch(id) {
   new daum.Postcode({
     oncomplete: function(data) {
@@ -359,6 +377,17 @@ function openAddressSearch(id) {
       });
       var copyBtn = document.getElementById('copy-btn-' + id);
       if (copyBtn) copyBtn.dataset.addr = display;
+
+      // 행안부 API로 PNU 구성 후 저장
+      jusoSearch(road || jibun, function(juso) {
+        if (juso && juso.admCd) {
+          var pnu = juso.admCd
+            + juso.mtYn
+            + String(juso.lnbrMnnm).padStart(4, '0')
+            + String(juso.lnbrSlno).padStart(4, '0');
+          pnuStore[id] = pnu;
+        }
+      });
 
       var label = (data.bname || '') + ' ' + (data.jibun || '');
       var wrap = document.getElementById('map-' + id);
@@ -473,7 +502,7 @@ function addBlock() {
       + '<button class="addr-btn" onclick="openAddressSearch(' + id + ')">주소 검색</button>'
       + '<div class="ext-btns">'
         + '<button class="ext-btn copy-btn" id="copy-btn-' + id + '" onclick="copyAddr(' + id + ')">주소 복사</button>'
-        + '<a class="ext-btn" id="eum-btn-' + id + '" target="_blank" href="https://www.eum.go.kr/web/am/amMain.jsp">토지이음 ↗</a>'
+        + '<button class="ext-btn" id="eum-btn-' + id + '" onclick="openEum(' + id + ')">토지이음 ↗</button>'
         + '<a class="ext-btn" id="seoul-btn-' + id + '" target="_blank" href="https://urban.seoul.go.kr/view/map/main.html">서울도시공간포털 ↗</a>'
       + '</div>'
       + '<div class="converter-wrap">'
