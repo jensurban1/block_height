@@ -17,103 +17,105 @@
   --danger: #c0392b; --warn: #b45309; --warn-bg: #fef3c7;
   --success: #1a7a4a; --success-bg: #eaf5ee;
 }
-body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-header h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+/* ── 헤더 ── */
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; z-index: 100; }
+header h1 { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; }
 header span { font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', monospace; }
 .add-btn { font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--accent); background: var(--accent-bg); border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
 .add-btn:hover { opacity: 0.8; }
 
-.layout { display: grid; grid-template-columns: 1fr 280px; min-height: calc(100vh - 53px); }
-.blocks-col { padding: 20px; border-right: 1px solid var(--border); overflow-y: auto; }
-.summary-col { padding: 20px; position: sticky; top: 53px; height: calc(100vh - 53px); overflow-y: auto; }
+/* ── 메인 레이아웃: 좌(지도) + 우(구역목록) ── */
+.main { display: grid; grid-template-columns: 1fr 380px; flex: 1; overflow: hidden; }
 
-.block-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
-.block-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #faf9f7; border-bottom: 1px solid var(--border-light); }
-.block-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-hint); background: var(--border-light); border-radius: 3px; padding: 2px 7px; margin-right: 8px; }
-.block-name-input { font-size: 13px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; border: none; background: transparent; color: var(--text); outline: none; flex: 1; }
-.block-name-input::placeholder { color: var(--text-hint); }
-.remove-btn { font-size: 11px; color: var(--text-hint); background: none; border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-.remove-btn:hover { color: var(--danger); border-color: var(--danger); }
-
-.block-body { display: grid; grid-template-columns: 210px 1fr 300px; align-items: stretch; }
-.col-addr { padding: 14px; border-right: 1px solid var(--border-light); display: flex; flex-direction: column; }
-.col-inputs { padding: 14px; border-right: 1px solid var(--border-light); }
-.col-map { display: flex; flex-direction: column; }
-
-.addr-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 6px; }
-.addr-display { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; min-height: 32px; line-height: 1.5; }
-.addr-btn { width: 100%; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--accent); border: none; border-radius: 6px; padding: 7px; cursor: pointer; margin-bottom: 6px; }
-.addr-btn:hover { opacity: 0.85; }
-.ext-btns { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-.ext-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; text-decoration: none; text-align: center; display: none; }
-.ext-btn:hover { background: var(--bg); }
-.ext-btn.show, .copy-btn.show { display: block; }
-
-/* [수정3] 지번→도로명 변환기 크기 개선 */
-.converter-wrap { border-top: 1px dashed var(--border); padding-top: 12px; margin-top: auto; }
-.converter-label { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--text-sub); margin-bottom: 8px; }
-.converter-input-row { display: flex; gap: 5px; margin-bottom: 6px; }
-.converter-input { flex: 1; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 7px 8px; outline: none; min-width: 0; }
-.converter-input:focus { border-color: var(--accent); }
-.converter-btn { font-size: 12px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--text-sub); border: none; border-radius: 6px; padding: 7px 11px; cursor: pointer; white-space: nowrap; }
-.converter-btn:hover { background: var(--text); }
-.converter-result { font-size: 11px; line-height: 1.6; padding: 7px 9px; border-radius: 6px; word-break: break-all; display: none; }
-.converter-result.ok  { background: var(--success-bg); color: var(--success); display: block; }
-.converter-result.err { background: var(--warn-bg); color: var(--warn); display: block; }
-.converter-copy { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; margin-top: 5px; padding: 5px 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; width: 100%; display: none; }
-.converter-copy.show { display: block; }
-.converter-copy:hover { background: var(--bg); }
-
-.inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.inputs-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.input-field { display: flex; flex-direction: column; gap: 3px; }
-.input-field label { font-size: 10px; color: var(--text-sub); }
-input[type="number"], select { font-family: 'Noto Sans KR', sans-serif; font-size: 12px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; outline: none; width: 100%; transition: border-color 0.15s; }
-input[type="number"]:focus, select:focus { border-color: var(--accent); }
-.section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); margin: 6px 0; display: flex; align-items: center; gap: 6px; }
-.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
-
-.result-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-light); }
-.metric { background: var(--bg); border-radius: 6px; padding: 7px 8px; }
-.metric-label { font-size: 9px; color: var(--text-hint); margin-bottom: 2px; }
-.metric-value { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; }
-.metric-value.hi { color: var(--accent); }
-.metric-unit { font-size: 9px; color: var(--text-hint); }
-
-.map-wrap { flex: 1; }
-.map-placeholder { display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-hint); text-align: center; line-height: 1.8; background: var(--bg); height: 280px; }
-
-/* [수정2] 지도 툴바 및 거리재기 결과 크기 개선 */
-.map-tools { display: flex; gap: 6px; padding: 7px 10px; background: var(--surface); border-top: 1px solid var(--border-light); flex-wrap: wrap; align-items: center; }
+/* ── 좌측: 공유 지도 ── */
+.map-panel { position: relative; background: var(--bg); display: flex; flex-direction: column; }
+#shared-map { flex: 1; }
+.map-tools-bar { display: flex; gap: 6px; padding: 8px 12px; background: var(--surface); border-top: 1px solid var(--border); flex-wrap: wrap; align-items: center; }
 .tool-btn { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; }
+.tool-btn:hover { background: var(--bg); }
 .tool-btn.active { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
 .tool-btn.layer-on { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); }
-.measure-result { font-size: 12px; font-weight: 600; color: var(--warn); padding: 2px 10px 7px; display: none; font-family: 'DM Mono', monospace; }
-.measure-result.show { display: block; }
+.map-addr-badge { font-size: 11px; color: var(--text-sub); background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 4px 10px; font-family: 'DM Mono', monospace; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.measure-result-bar { font-size: 11px; color: var(--warn); font-family: 'DM Mono', monospace; padding: 0 4px; display: none; }
+.measure-result-bar.show { display: block; }
 
-.summary-title { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 14px; }
-.summary-block-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.summary-block-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
-.summary-block-name { font-size: 12px; font-weight: 500; margin-bottom: 6px; }
-.summary-block-vals { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-.sval { font-size: 10px; color: var(--text-sub); }
-.sval span { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
-.summary-total { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
-.total-label { font-size: 10px; color: var(--text-sub); margin-bottom: 3px; }
-.total-value { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--accent); }
-.total-unit { font-size: 11px; color: var(--text-hint); }
-.divider-line { border: none; border-top: 1px solid var(--border-light); margin: 12px 0; }
-.bcr-custom-wrap { display: none; margin-top: 4px; }
+/* ── 우측: 구역 목록 ── */
+.blocks-panel { border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.blocks-header { padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.blocks-header-title { font-size: 11px; font-weight: 600; color: var(--text-hint); letter-spacing: 0.06em; text-transform: uppercase; }
+.blocks-scroll { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 
-@media (max-width: 900px) {
-  .layout { grid-template-columns: 1fr; }
-  .summary-col { position: static; height: auto; border-top: 1px solid var(--border); }
-  .block-body { grid-template-columns: 1fr; }
-  .col-addr, .col-inputs { border-right: none; border-bottom: 1px solid var(--border-light); }
-  .result-strip { grid-template-columns: repeat(3, 1fr); }
-}
+/* ── 구역 카드 (세로형) ── */
+.block-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+.block-card:hover { border-color: var(--accent); }
+.block-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-bg); }
+.block-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #faf9f7; border-bottom: 1px solid var(--border-light); }
+.block-header-left { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.block-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-hint); background: var(--border-light); border-radius: 3px; padding: 2px 6px; flex-shrink: 0; }
+.block-name-input { font-size: 12px; font-weight: 500; font-family: 'Noto Sans KR', sans-serif; border: none; background: transparent; color: var(--text); outline: none; min-width: 0; flex: 1; }
+.block-name-input::placeholder { color: var(--text-hint); }
+.remove-btn { font-size: 10px; color: var(--text-hint); background: none; border: 1px solid var(--border); border-radius: 3px; padding: 2px 6px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; flex-shrink: 0; }
+.remove-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+.block-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+
+/* 주소 행 */
+.addr-row { display: flex; align-items: center; gap: 6px; }
+.addr-display { font-size: 11px; color: var(--text-sub); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.addr-display.empty { color: var(--text-hint); }
+.addr-search-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--accent); border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; flex-shrink: 0; }
+.addr-search-btn:hover { opacity: 0.85; }
+
+/* 외부 링크 행 */
+.link-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.link-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 3px 7px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; text-decoration: none; display: inline-block; }
+.link-btn:hover { background: var(--bg); color: var(--text); }
+
+/* 지번→도로명 변환기 */
+.converter-row { display: flex; gap: 4px; }
+.converter-input { flex: 1; font-size: 11px; font-family: 'Noto Sans KR', sans-serif; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 7px; outline: none; min-width: 0; }
+.converter-input:focus { border-color: var(--accent); background: var(--surface); }
+.converter-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; color: var(--surface); background: var(--text-sub); border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; white-space: nowrap; }
+.converter-btn:hover { background: var(--text); }
+.converter-result { font-size: 10px; line-height: 1.5; padding: 5px 7px; border-radius: 4px; word-break: break-all; display: none; }
+.converter-result.ok  { background: var(--success-bg); color: var(--success); display: block; }
+.converter-result.err { background: var(--warn-bg); color: var(--warn); display: block; }
+.converter-copy { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; margin-top: 3px; padding: 3px 7px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; width: 100%; display: none; }
+.converter-copy.show { display: block; }
+
+/* 구분선 */
+.divider { border: none; border-top: 1px solid var(--border-light); margin: 2px 0; }
+
+/* 입력 그리드 */
+.input-section-label { font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-hint); display: flex; align-items: center; gap: 4px; }
+.input-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
+.inputs-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.inputs-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+.input-field { display: flex; flex-direction: column; gap: 2px; }
+.input-field label { font-size: 9px; color: var(--text-hint); }
+input[type="number"], select { font-family: 'Noto Sans KR', sans-serif; font-size: 11px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; outline: none; width: 100%; }
+input[type="number"]:focus, select:focus { border-color: var(--accent); background: var(--surface); }
+.readonly-input { background: #faf9f7 !important; }
+
+/* 결과 스트립 */
+.result-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.metric { background: var(--bg); border-radius: 4px; padding: 5px 6px; }
+.metric-label { font-size: 8px; color: var(--text-hint); margin-bottom: 1px; }
+.metric-value { font-size: 13px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.metric-value.hi { color: var(--accent); }
+.metric-unit { font-size: 8px; color: var(--text-hint); }
+
+/* ── 요약 패널 (우측 하단 고정) ── */
+.summary-footer { border-top: 1px solid var(--border); padding: 10px 14px; background: var(--surface); flex-shrink: 0; }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.summary-item { }
+.summary-label { font-size: 9px; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+.summary-value { font-size: 18px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--accent); }
+.summary-unit { font-size: 10px; color: var(--text-hint); }
+
+.bcr-custom-wrap { display: none; margin-top: 3px; }
 </style>
 </head>
 <body>
@@ -126,43 +128,138 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
   <button class="add-btn" onclick="addBlock()">+ 구역 추가</button>
 </header>
 
-<div class="layout">
-  <div class="blocks-col" id="blocks-container"></div>
-  <div class="summary-col">
-    <div class="summary-title">전체 요약</div>
-    <div class="summary-block-list" id="summary-list"></div>
-    <hr class="divider-line">
-    <div class="summary-total">
-      <div class="total-label">블록평균높이</div>
-      <div><span class="total-value" id="avg-height">—</span> <span class="total-unit">m</span></div>
-      <div style="margin-top:10px;">
-        <div class="total-label">총 체적</div>
-        <div style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;" id="sum-vol">—</div>
+<div class="main">
+
+  <!-- 좌측: 공유 지도 -->
+  <div class="map-panel">
+    <div id="shared-map"></div>
+    <div class="map-tools-bar">
+      <button class="tool-btn layer-on" id="cadastral-btn">지적도 ON</button>
+      <button class="tool-btn" id="measure-btn">거리재기</button>
+      <button class="tool-btn" id="reset-btn">초기화</button>
+      <div class="map-addr-badge" id="map-addr-badge">주소를 검색하면 지도가 이동합니다</div>
+      <div class="measure-result-bar" id="measure-result-bar"></div>
+    </div>
+  </div>
+
+  <!-- 우측: 구역 목록 -->
+  <div class="blocks-panel">
+    <div class="blocks-header">
+      <span class="blocks-header-title">구역 목록</span>
+    </div>
+    <div class="blocks-scroll" id="blocks-container"></div>
+    <div class="summary-footer">
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-label">블록평균높이</div>
+          <div><span class="summary-value" id="avg-height">—</span> <span class="summary-unit">m</span></div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">총 체적</div>
+          <div><span class="summary-value" id="sum-vol" style="font-size:13px;">—</span></div>
+        </div>
       </div>
     </div>
   </div>
+
 </div>
 
 <script>
 var VKEY     = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 var JUSO_KEY = 'U01TX0FVVEgyMDI2MDQwNzE0MzkwODExNzg2NTc=';
-var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
-var MAP_H = 280;
+var blockCount = 0, blocks = [], activeBlockId = null;
 var pnuStore = {};
 
-// ── 토지이음 필지 직접 이동 ───────────────────────────
-function openEum(id) {
-  var pnu = pnuStore[id] || '';
-  var form = document.createElement('form');
-  form.method = 'post';
-  form.action = 'https://www.eum.go.kr/web/ar/lu/luLandDet.jsp';
-  form.target = '_blank';
-  var inp = document.createElement('input');
-  inp.type = 'hidden'; inp.name = 'pnu'; inp.value = pnu;
-  form.appendChild(inp);
-  document.body.appendChild(form);
-  form.submit();
-  document.body.removeChild(form);
+// ── 공유 지도 초기화 ──────────────────────────────────
+var sharedMap = L.map('shared-map', { center: [37.5665, 126.9780], zoom: 13 });
+
+L.tileLayer(
+  'https://api.vworld.kr/req/wmts/1.0.0/' + VKEY + '/Base/{z}/{y}/{x}.png',
+  { attribution: '© <a href="https://www.vworld.kr">VWorld</a>', maxZoom: 19 }
+).addTo(sharedMap);
+
+var cadastralLayer = L.tileLayer.wms('https://api.vworld.kr/req/wms', {
+  layers: 'lt_c_landinfobasemap',
+  styles: '', format: 'image/png', transparent: true,
+  version: '1.3.0', key: VKEY, maxZoom: 19, attribution: '© VWorld'
+}).addTo(sharedMap);
+
+var cadastralOn = true;
+var currentMarker = null;
+var measureState = { on: false, points: [], dotMarkers: [], polyline: null, previewLine: null, clickFn: null, moveFn: null };
+
+// 지적도 토글
+document.getElementById('cadastral-btn').onclick = function() {
+  var btn = this;
+  if (cadastralOn) {
+    sharedMap.removeLayer(cadastralLayer); cadastralOn = false;
+    btn.classList.remove('layer-on'); btn.textContent = '지적도';
+  } else {
+    cadastralLayer.addTo(sharedMap); cadastralOn = true;
+    btn.classList.add('layer-on'); btn.textContent = '지적도 ON';
+  }
+};
+
+// 거리재기
+document.getElementById('measure-btn').onclick = function() {
+  var btn = this;
+  var res = document.getElementById('measure-result-bar');
+  if (measureState.on) {
+    measureState.on = false; btn.classList.remove('active'); btn.textContent = '거리재기';
+    sharedMap.off('click', measureState.clickFn);
+    sharedMap.off('mousemove', measureState.moveFn);
+    sharedMap.getContainer().style.cursor = '';
+    if (measureState.previewLine) { sharedMap.removeLayer(measureState.previewLine); measureState.previewLine = null; }
+  } else {
+    clearMeasure();
+    measureState.on = true; btn.classList.add('active'); btn.textContent = '측정 종료';
+    res.className = 'measure-result-bar';
+    sharedMap.getContainer().style.cursor = 'crosshair';
+
+    measureState.clickFn = function(e) {
+      measureState.points.push(e.latlng);
+      var dot = L.circleMarker(e.latlng, { radius: 4, color: '#b45309', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(sharedMap);
+      measureState.dotMarkers.push(dot);
+      if (measureState.polyline) sharedMap.removeLayer(measureState.polyline);
+      if (measureState.points.length >= 2) {
+        measureState.polyline = L.polyline(measureState.points, { color: '#b45309', weight: 2.5, opacity: 1 }).addTo(sharedMap);
+        var dist = 0;
+        for (var i = 1; i < measureState.points.length; i++) dist += measureState.points[i-1].distanceTo(measureState.points[i]);
+        res.className = 'measure-result-bar show';
+        res.textContent = '총 거리: ' + dist.toFixed(1) + ' m  |  구간: ' + (measureState.points.length - 1) + '개';
+      }
+    };
+    measureState.moveFn = function(e) {
+      if (measureState.points.length === 0) return;
+      var last = measureState.points[measureState.points.length - 1];
+      if (measureState.previewLine) sharedMap.removeLayer(measureState.previewLine);
+      measureState.previewLine = L.polyline([last, e.latlng], { color: '#b45309', weight: 1.5, opacity: 0.5, dashArray: '6 4' }).addTo(sharedMap);
+    };
+    sharedMap.on('click', measureState.clickFn);
+    sharedMap.on('mousemove', measureState.moveFn);
+  }
+};
+
+document.getElementById('reset-btn').onclick = function() {
+  if (measureState.on) document.getElementById('measure-btn').click();
+  clearMeasure();
+  document.getElementById('measure-result-bar').className = 'measure-result-bar';
+};
+
+function clearMeasure() {
+  if (measureState.polyline)    { sharedMap.removeLayer(measureState.polyline);    measureState.polyline = null; }
+  if (measureState.previewLine) { sharedMap.removeLayer(measureState.previewLine); measureState.previewLine = null; }
+  measureState.dotMarkers.forEach(function(m) { sharedMap.removeLayer(m); });
+  measureState.dotMarkers = []; measureState.points = [];
+}
+
+// 지도 이동 + 마커
+function moveMapTo(lat, lng, label) {
+  sharedMap.setView([lat, lng], 17);
+  if (currentMarker) sharedMap.removeLayer(currentMarker);
+  currentMarker = L.marker([lat, lng]).addTo(sharedMap);
+  currentMarker.bindPopup('<div style="font-size:11px;white-space:nowrap;">' + label + '</div>').openPopup();
+  document.getElementById('map-addr-badge').textContent = label;
 }
 
 // ── 행안부 주소검색 API ───────────────────────────────
@@ -199,27 +296,8 @@ function nominatimGeocode(query, zipNo, callback) {
     .catch(function() { callback(null, null); });
 }
 
-// ── 주소 처리 통합 함수 ───────────────────────────────
-// [수정1] daum.Postcode의 data.x/y(건물 좌표) 우선 사용
-//         값이 없거나 0이면 행안부 API → Nominatim 순으로 폴백
-function resolveAddress(road, jibun, daumX, daumY, onMapReady, onFail, blockId) {
-  // daum.Postcode x/y가 유효한 좌표면 즉시 사용 (가장 정확)
-  var lat = parseFloat(daumY), lng = parseFloat(daumX);
-  if (lat && lng && lat !== 0 && lng !== 0) {
-    // PNU는 행안부 API로 별도 취득 (비동기, 지도 표시와 무관)
-    jusoSearch(road || jibun, function(juso) {
-      if (juso && juso.admCd) {
-        pnuStore[blockId] = juso.admCd
-          + juso.mtYn
-          + String(juso.lnbrMnnm).padStart(4, '0')
-          + String(juso.lnbrSlno).padStart(4, '0');
-      }
-    });
-    onMapReady(lat, lng);
-    return;
-  }
-
-  // daum 좌표 없음 → 행안부 API + Nominatim
+// ── 주소 → PNU저장 + Geocoding ────────────────────────
+function resolveAddress(road, jibun, blockId, onSuccess, onFail) {
   jusoSearch(road || jibun, function(juso) {
     if (juso && juso.admCd) {
       pnuStore[blockId] = juso.admCd
@@ -230,13 +308,13 @@ function resolveAddress(road, jibun, daumX, daumY, onMapReady, onFail, blockId) 
     var geoAddr = (juso && juso.roadAddrPart1) || road || jibun;
     var zipNo   = (juso && juso.zipNo) || '';
 
-    nominatimGeocode(geoAddr, zipNo, function(lat2, lng2) {
-      if (lat2 && lng2) { onMapReady(lat2, lng2); return; }
-      nominatimGeocode(jibun, zipNo, function(lat3, lng3) {
-        if (lat3 && lng3) { onMapReady(lat3, lng3); return; }
+    nominatimGeocode(geoAddr, zipNo, function(lat, lng) {
+      if (lat && lng) { onSuccess(lat, lng); return; }
+      nominatimGeocode(jibun, zipNo, function(lat2, lng2) {
+        if (lat2 && lng2) { onSuccess(lat2, lng2); return; }
         var rough = (road || jibun).split(' ').slice(0, 3).join(' ');
-        nominatimGeocode(rough, '', function(lat4, lng4) {
-          if (lat4 && lng4) onMapReady(lat4, lng4);
+        nominatimGeocode(rough, '', function(lat3, lng3) {
+          if (lat3 && lng3) onSuccess(lat3, lng3);
           else onFail();
         });
       });
@@ -244,108 +322,19 @@ function resolveAddress(road, jibun, daumX, daumY, onMapReady, onFail, blockId) 
   });
 }
 
-// ── 지도 초기화 ───────────────────────────────────────
-function initMap(id, lat, lng, label) {
-  if (mapObjs[id] && mapObjs[id].map) {
-    try { mapObjs[id].map.remove(); } catch(e) {}
-    delete mapObjs[id];
-  }
-  var wrap = document.getElementById('map-' + id);
-  if (!wrap) return;
-  wrap.innerHTML = '<div id="lmap-' + id + '" style="width:100%;height:' + MAP_H + 'px;"></div>';
-
-  // [수정4] maxNativeZoom:19, maxZoom:21 → 타일 업스케일로 2레벨 추가 확대
-  var map = L.map('lmap-' + id, { center: [lat, lng], zoom: 17, maxZoom: 21 });
-
-  L.tileLayer(
-    'https://api.vworld.kr/req/wmts/1.0.0/' + VKEY + '/Base/{z}/{y}/{x}.png',
-    { attribution: '© <a href="https://www.vworld.kr">VWorld</a>', maxNativeZoom: 19, maxZoom: 21 }
-  ).addTo(map);
-
-  var cadastralLayer = L.tileLayer.wms('https://api.vworld.kr/req/wms', {
-    layers: 'lt_c_landinfobasemap',
-    styles: '', format: 'image/png', transparent: true,
-    version: '1.3.0', key: VKEY, maxZoom: 21, attribution: '© VWorld'
-  }).addTo(map);
-
-  var marker = L.marker([lat, lng]).addTo(map);
-  marker.bindPopup('<div style="font-size:11px;white-space:nowrap;">' + label + '</div>').openPopup();
-
-  mapObjs[id] = { map: map, cadastralLayer: cadastralLayer, marker: marker, cadastralOn: true };
-  measureState[id] = { on: false, points: [], dotMarkers: [], polyline: null, previewLine: null, clickFn: null, moveFn: null };
-
-  document.getElementById('cadastral-btn-' + id).onclick = function() {
-    var obj = mapObjs[id]; var btn = this;
-    if (obj.cadastralOn) {
-      map.removeLayer(obj.cadastralLayer); obj.cadastralOn = false;
-      btn.classList.remove('layer-on'); btn.textContent = '지적도';
-    } else {
-      obj.cadastralLayer.addTo(map); obj.cadastralOn = true;
-      btn.classList.add('layer-on'); btn.textContent = '지적도 ON';
-    }
-  };
-
-  document.getElementById('measure-btn-' + id).onclick = function() {
-    var st = measureState[id]; var btn = this;
-    var res = document.getElementById('measure-result-' + id);
-    if (st.on) {
-      st.on = false; btn.classList.remove('active'); btn.textContent = '거리재기';
-      map.off('click', st.clickFn); map.off('mousemove', st.moveFn);
-      map.getContainer().style.cursor = '';
-      if (st.previewLine) { map.removeLayer(st.previewLine); st.previewLine = null; }
-    } else {
-      clearMeasure(id); st.on = true;
-      btn.classList.add('active'); btn.textContent = '측정 종료';
-      res.className = 'measure-result';
-      map.getContainer().style.cursor = 'crosshair';
-      st.clickFn = function(e) {
-        st.points.push(e.latlng);
-        var dot = L.circleMarker(e.latlng, { radius: 4, color: '#b45309', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(map);
-        st.dotMarkers.push(dot);
-        if (st.polyline) map.removeLayer(st.polyline);
-        if (st.points.length >= 2) {
-          st.polyline = L.polyline(st.points, { color: '#b45309', weight: 2.5, opacity: 1 }).addTo(map);
-          var dist = 0;
-          for (var i = 1; i < st.points.length; i++) dist += st.points[i-1].distanceTo(st.points[i]);
-          res.className = 'measure-result show';
-          res.textContent = '▸ ' + dist.toFixed(1) + ' m  ·  ' + (st.points.length - 1) + '구간';
-        }
-      };
-      st.moveFn = function(e) {
-        if (st.points.length === 0) return;
-        var last = st.points[st.points.length - 1];
-        if (st.previewLine) map.removeLayer(st.previewLine);
-        st.previewLine = L.polyline([last, e.latlng], { color: '#b45309', weight: 1.5, opacity: 0.5, dashArray: '6 4' }).addTo(map);
-      };
-      map.on('click', st.clickFn);
-      map.on('mousemove', st.moveFn);
-    }
-  };
-
-  document.getElementById('reset-btn-' + id).onclick = function() {
-    var st = measureState[id];
-    if (st.on) document.getElementById('measure-btn-' + id).click();
-    clearMeasure(id);
-    document.getElementById('measure-result-' + id).className = 'measure-result';
-  };
-}
-
-function clearMeasure(id) {
-  var st = measureState[id]; if (!st) return;
-  var obj = mapObjs[id]; if (!obj) return;
-  if (st.polyline)    { obj.map.removeLayer(st.polyline);    st.polyline = null; }
-  if (st.previewLine) { obj.map.removeLayer(st.previewLine); st.previewLine = null; }
-  st.dotMarkers.forEach(function(m) { obj.map.removeLayer(m); });
-  st.dotMarkers = []; st.points = [];
-}
-
-function showGeoError(id) {
-  var wrap = document.getElementById('map-' + id);
-  if (wrap) wrap.innerHTML =
-    '<div class="map-placeholder" style="height:' + MAP_H + 'px;flex-direction:column;gap:8px;">'
-    + '<span>좌표를 찾을 수 없습니다.</span>'
-    + '<span style="font-size:10px;color:var(--text-hint)">주소를 다시 확인해 주세요.</span>'
-    + '</div>';
+// ── 토지이음 필지 직접 이동 ───────────────────────────
+function openEum(id) {
+  var pnu = pnuStore[id] || '';
+  var form = document.createElement('form');
+  form.method = 'post';
+  form.action = 'https://www.eum.go.kr/web/ar/lu/luLandDet.jsp';
+  form.target = '_blank';
+  var inp = document.createElement('input');
+  inp.type = 'hidden'; inp.name = 'pnu'; inp.value = pnu;
+  form.appendChild(inp);
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
 }
 
 // ── 주소 검색 ─────────────────────────────────────────
@@ -356,28 +345,38 @@ function openAddressSearch(id) {
       var jibun = data.jibunAddress || data.autoJibunAddress || '';
       var display = jibun || road;
 
-      document.getElementById('addr-display-' + id).textContent = display;
+      var addrEl = document.getElementById('addr-display-' + id);
+      if (addrEl) { addrEl.textContent = display; addrEl.classList.remove('empty'); }
+
       var nm = document.getElementById('name-' + id);
       if (nm && !nm.value) nm.value = (data.bname || '') + ' ' + (data.jibun || '');
 
-      ['eum-btn-', 'copy-btn-', 'seoul-btn-'].forEach(function(p) {
-        var el = document.getElementById(p + id); if (el) el.classList.add('show');
-      });
+      // 주소 복사 버튼 data 업데이트
       var copyBtn = document.getElementById('copy-btn-' + id);
       if (copyBtn) copyBtn.dataset.addr = display;
 
-      var label = (data.bname || '') + ' ' + (data.jibun || '');
-      var wrap = document.getElementById('map-' + id);
-      if (wrap) wrap.innerHTML = '<div class="map-placeholder" style="height:' + MAP_H + 'px;">좌표 검색 중...</div>';
+      document.getElementById('map-addr-badge').textContent = '검색 중...';
 
-      // [수정1] data.x(경도), data.y(위도) 전달 → 있으면 즉시 사용
-      resolveAddress(road, jibun, data.x, data.y,
-        function(lat, lng) { initMap(id, lat, lng, label); },
-        function() { showGeoError(id); },
-        id
+      resolveAddress(road, jibun, id,
+        function(lat, lng) {
+          var label = (data.bname || '') + ' ' + (data.jibun || '');
+          moveMapTo(lat, lng, label);
+          // 카드 활성화
+          setActiveBlock(id);
+        },
+        function() {
+          document.getElementById('map-addr-badge').textContent = '좌표 검색 실패 — ' + display;
+        }
       );
     }
   }).open();
+}
+
+function setActiveBlock(id) {
+  activeBlockId = id;
+  document.querySelectorAll('.block-card').forEach(function(c) { c.classList.remove('active'); });
+  var card = document.getElementById('block-' + id);
+  if (card) card.classList.add('active');
 }
 
 // ── 지번→도로명 변환 ──────────────────────────────────
@@ -423,6 +422,22 @@ function runConvert(id) {
   });
 }
 
+function copyAddr(id) {
+  var btn  = document.getElementById('copy-btn-' + id);
+  var addr = (btn && btn.dataset.addr) || '';
+  if (!addr) return;
+  navigator.clipboard.writeText(addr).then(function() {
+    btn.textContent = '복사됨 ✓';
+    setTimeout(function() { btn.textContent = '주소 복사'; }, 1500);
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = addr; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    btn.textContent = '복사됨 ✓';
+    setTimeout(function() { btn.textContent = '주소 복사'; }, 1500);
+  });
+}
+
 // ── 용도지역 → 건폐율 ────────────────────────────────
 var ZONE_BCR = {
   '50':50,'40':40,'60_1':60,'60_2':60,'50_3':50,'60_j':60,
@@ -446,69 +461,65 @@ function applyCustomBCR(id) {
   document.getElementById('bcr-' + id).value = val; calc(id);
 }
 
-function copyAddr(id) {
-  var btn  = document.getElementById('copy-btn-' + id);
-  var addr = (btn && btn.dataset.addr) || '';
-  if (!addr) return;
-  navigator.clipboard.writeText(addr).then(function() {
-    btn.textContent = '복사됨 ✓';
-    setTimeout(function() { btn.textContent = '주소 복사'; }, 1500);
-  }).catch(function() {
-    var ta = document.createElement('textarea');
-    ta.value = addr; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-    btn.textContent = '복사됨 ✓';
-    setTimeout(function() { btn.textContent = '주소 복사'; }, 1500);
-  });
-}
-
 // ── 구역 카드 ─────────────────────────────────────────
 function addBlock() {
   blockCount++; var id = blockCount; blocks.push(id);
   var div = document.createElement('div');
-  div.className = 'block-card'; div.id = 'block-' + id;
+  div.className = 'block-card';
+  div.id = 'block-' + id;
+  div.onclick = function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+    setActiveBlock(id);
+  };
+
   div.innerHTML =
     '<div class="block-header">'
-      + '<span class="block-num">' + String(id).padStart(2,'0') + '</span>'
-      + '<input class="block-name-input" type="text" placeholder="구역명 입력" id="name-' + id + '">'
+      + '<div class="block-header-left">'
+        + '<span class="block-num">' + String(id).padStart(2,'0') + '</span>'
+        + '<input class="block-name-input" type="text" placeholder="구역명 입력" id="name-' + id + '">'
+      + '</div>'
       + '<button class="remove-btn" onclick="removeBlock(' + id + ')">삭제</button>'
     + '</div>'
     + '<div class="block-body">'
 
-    + '<div class="col-addr">'
-      + '<div class="addr-label">위치</div>'
-      + '<div class="addr-display" id="addr-display-' + id + '">—</div>'
-      + '<button class="addr-btn" onclick="openAddressSearch(' + id + ')">주소 검색</button>'
-      + '<div class="ext-btns">'
-        + '<button class="ext-btn copy-btn" id="copy-btn-' + id + '" onclick="copyAddr(' + id + ')">주소 복사</button>'
-        + '<button class="ext-btn" id="eum-btn-' + id + '" onclick="openEum(' + id + ')">토지이음 ↗</button>'
-        + '<a class="ext-btn" id="seoul-btn-' + id + '" target="_blank" href="https://urban.seoul.go.kr/view/map/main.html">서울도시공간포털 ↗</a>'
+      // 주소 행
+      + '<div class="addr-row">'
+        + '<div class="addr-display empty" id="addr-display-' + id + '">주소 미설정</div>'
+        + '<button class="addr-search-btn" onclick="openAddressSearch(' + id + ')">검색</button>'
       + '</div>'
-      + '<div class="converter-wrap">'
-        + '<div class="converter-label">지번 → 도로명 변환</div>'
-        + '<div class="converter-input-row">'
-          + '<input class="converter-input" type="text" id="conv-input-' + id + '" placeholder="예: 역삼동 689-14"'
-          + ' onkeydown="if(event.key===\'Enter\')runConvert(' + id + ')">'
-          + '<button class="converter-btn" onclick="runConvert(' + id + ')">변환</button>'
-        + '</div>'
-        + '<div class="converter-result" id="conv-result-' + id + '"></div>'
-        + '<button class="converter-copy" id="conv-copy-' + id + '">도로명 복사</button>'
-      + '</div>'
-    + '</div>'
 
-    + '<div class="col-inputs">'
+      // 외부 링크 (3번 수정: 단순 href 링크)
+      + '<div class="link-row">'
+        + '<button class="link-btn" id="copy-btn-' + id + '" onclick="copyAddr(' + id + ')">주소 복사</button>'
+        + '<button class="link-btn" onclick="openEum(' + id + ')">토지이음 ↗</button>'
+        + '<a class="link-btn" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank">토지이음(메인) ↗</a>'
+        + '<a class="link-btn" href="https://urban.seoul.go.kr/view/map/main.html" target="_blank">서울도시공간포털 ↗</a>'
+      + '</div>'
+
+      // 지번→도로명 변환기
+      + '<div class="converter-row">'
+        + '<input class="converter-input" type="text" id="conv-input-' + id + '" placeholder="지번 입력 (예: 역삼동 689-14)"'
+        + ' onkeydown="if(event.key===\'Enter\')runConvert(' + id + ')">'
+        + '<button class="converter-btn" onclick="runConvert(' + id + ')">도로명 변환</button>'
+      + '</div>'
+      + '<div class="converter-result" id="conv-result-' + id + '"></div>'
+      + '<button class="converter-copy" id="conv-copy-' + id + '">도로명 복사</button>'
+
+      + '<hr class="divider">'
+
+      // 입력 필드
       + '<input type="hidden" id="bcr-' + id + '" value="60">'
-      + '<div class="section-label">공통</div>'
+      + '<div class="input-section-label">공통</div>'
       + '<div class="inputs-grid-3">'
         + '<div class="input-field"><label>대지면적 (㎡)</label><input type="number" id="area-' + id + '" placeholder="입력" oninput="calc(' + id + ')"></div>'
         + '<div class="input-field"><label>용도지역</label>'
-          + '<select class="zone-select" id="zone-sel-' + id + '" onchange="applyZoneBCR(' + id + ')">'
+          + '<select id="zone-sel-' + id + '" onchange="applyZoneBCR(' + id + ')">'
             + '<option value="">— 선택 —</option>'
-            + '<option value="50">제1종전용주거 (50%)</option>'
-            + '<option value="40">제2종전용주거 (40%)</option>'
-            + '<option value="60_1">제1종일반주거 (60%)</option>'
-            + '<option value="60_2">제2종일반주거 (60%)</option>'
-            + '<option value="50_3">제3종일반주거 (50%)</option>'
+            + '<option value="50">제1종전용 (50%)</option>'
+            + '<option value="40">제2종전용 (40%)</option>'
+            + '<option value="60_1">제1종일반 (60%)</option>'
+            + '<option value="60_2">제2종일반 (60%)</option>'
+            + '<option value="50_3">제3종일반 (50%)</option>'
             + '<option value="60_j">준주거 (60%)</option>'
             + '<option value="60_cs">중심상업 (60%)</option>'
             + '<option value="60_cg">일반상업 (60%)</option>'
@@ -522,61 +533,53 @@ function addBlock() {
             + '<option value="20_gn">자연녹지 (20%)</option>'
             + '<option value="custom">직접 입력</option>'
           + '</select>'
-          + '<div class="bcr-custom-wrap" id="bcr-wrap-' + id + '"><input type="number" id="bcr-custom-' + id + '" placeholder="건폐율 (%)" oninput="applyCustomBCR(' + id + ')"></div>'
+          + '<div class="bcr-custom-wrap" id="bcr-wrap-' + id + '"><input type="number" id="bcr-custom-' + id + '" placeholder="건폐율(%)" oninput="applyCustomBCR(' + id + ')"></div>'
         + '</div>'
-        + '<div class="input-field"><label>후면건축선후퇴 (m)</label><input type="number" id="rear-' + id + '" value="0" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>후면후퇴 (m)</label><input type="number" id="rear-' + id + '" value="0" oninput="calc(' + id + ')"></div>'
       + '</div>'
-      + '<div class="section-label">단변</div>'
+
+      + '<div class="input-section-label">단변</div>'
       + '<div class="inputs-grid-3">'
-        + '<div class="input-field"><label>전면도로폭 (m)</label><input type="number" id="road-s-' + id + '" placeholder="예: 50" oninput="calc(' + id + ')"></div>'
-        + '<div class="input-field"><label>전면건축선후퇴 (m)</label><input type="number" id="front-s-' + id + '" value="3" oninput="calc(' + id + ')"></div>'
-        + '<div class="input-field"><label>획지폭 (m)</label><input type="number" id="width-s-' + id + '" placeholder="예: 24.6" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>전면도로폭 (m)</label><input type="number" id="road-s-' + id + '" placeholder="50" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>전면후퇴 (m)</label><input type="number" id="front-s-' + id + '" value="3" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>획지폭 (m)</label><input type="number" id="width-s-' + id + '" placeholder="24.6" oninput="calc(' + id + ')"></div>'
       + '</div>'
-      + '<div class="inputs-grid">'
-        + '<div class="input-field"><label>획지깊이 (m) <span style="font-size:9px;color:var(--text-hint)">자동</span></label><input type="number" id="depth-s-' + id + '" placeholder="자동계산" readonly style="background:#faf9f7;"></div>'
+      + '<div class="inputs-grid-2">'
+        + '<div class="input-field"><label>획지깊이 (자동)</label><input type="number" id="depth-s-' + id + '" readonly class="readonly-input"></div>'
       + '</div>'
-      + '<div class="section-label">장변</div>'
+
+      + '<div class="input-section-label">장변</div>'
       + '<div class="inputs-grid-3">'
-        + '<div class="input-field"><label>전면도로폭 (m)</label><input type="number" id="road-l-' + id + '" placeholder="예: 50" oninput="calc(' + id + ')"></div>'
-        + '<div class="input-field"><label>전면건축선후퇴 (m)</label><input type="number" id="front-l-' + id + '" value="3" oninput="calc(' + id + ')"></div>'
-        + '<div class="input-field"><label>획지폭 (m)</label><input type="number" id="width-l-' + id + '" placeholder="예: 62" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>전면도로폭 (m)</label><input type="number" id="road-l-' + id + '" placeholder="50" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>전면후퇴 (m)</label><input type="number" id="front-l-' + id + '" value="3" oninput="calc(' + id + ')"></div>'
+        + '<div class="input-field"><label>획지폭 (m)</label><input type="number" id="width-l-' + id + '" placeholder="62" oninput="calc(' + id + ')"></div>'
       + '</div>'
-      + '<div class="inputs-grid">'
-        + '<div class="input-field"><label>획지깊이 (m) <span style="font-size:9px;color:var(--text-hint)">자동</span></label><input type="number" id="depth-l-' + id + '" placeholder="자동계산" readonly style="background:#faf9f7;"></div>'
+      + '<div class="inputs-grid-2">'
+        + '<div class="input-field"><label>획지깊이 (자동)</label><input type="number" id="depth-l-' + id + '" readonly class="readonly-input"></div>'
       + '</div>'
+
+      + '<hr class="divider">'
       + '<div class="result-strip">'
         + '<div class="metric"><div class="metric-label">최저점</div><div class="metric-value" id="r-min-' + id + '">—</div></div>'
         + '<div class="metric"><div class="metric-label">최고점</div><div class="metric-value" id="r-max-' + id + '">—</div></div>'
         + '<div class="metric"><div class="metric-label">평균점</div><div class="metric-value" id="r-avg-' + id + '">—</div></div>'
         + '<div class="metric"><div class="metric-label">최솟값</div><div class="metric-value hi" id="r-minval-' + id + '">—</div></div>'
-        + '<div class="metric"><div class="metric-label">건물바닥면적</div><div class="metric-value" id="r-floor-' + id + '">—</div></div>'
+        + '<div class="metric"><div class="metric-label">바닥면적</div><div class="metric-value" id="r-floor-' + id + '">—</div></div>'
         + '<div class="metric"><div class="metric-label">체적</div><div class="metric-value" id="r-vol-' + id + '">—</div></div>'
       + '</div>'
-    + '</div>'
 
-    + '<div class="col-map">'
-      + '<div class="map-wrap" id="map-' + id + '">'
-        + '<div class="map-placeholder" style="height:' + MAP_H + 'px;">주소를 검색하면<br>지도가 표시됩니다</div>'
-      + '</div>'
-      + '<div class="map-tools">'
-        + '<button class="tool-btn layer-on" id="cadastral-btn-' + id + '">지적도 ON</button>'
-        + '<button class="tool-btn" id="measure-btn-' + id + '">거리재기</button>'
-        + '<button class="tool-btn" id="reset-btn-' + id + '">초기화</button>'
-      + '</div>'
-      + '<div class="measure-result" id="measure-result-' + id + '"></div>'
-    + '</div>'
     + '</div>';
 
   document.getElementById('blocks-container').appendChild(div);
+  setActiveBlock(id);
   updateSummary();
 }
 
 function removeBlock(id) {
   blocks = blocks.filter(function(b) { return b !== id; });
-  var obj = mapObjs[id];
-  if (obj && obj.map) { try { obj.map.remove(); } catch(e) {} }
-  delete mapObjs[id]; delete measureState[id]; delete pnuStore[id];
+  delete pnuStore[id];
   var el = document.getElementById('block-' + id); if (el) el.remove();
+  if (activeBlockId === id) activeBlockId = blocks.length > 0 ? blocks[blocks.length - 1] : null;
   updateSummary();
 }
 
@@ -627,9 +630,6 @@ function calc(id) {
 
 function updateSummary() {
   var tF = 0, tV = 0, valid = false;
-  var listEl = document.getElementById('summary-list');
-  listEl.innerHTML = '';
-
   blocks.forEach(function(id) {
     var area = v('area-' + id), bcr = v('bcr-' + id) / 100, rear = v('rear-' + id);
     var rs = calcSide(v('road-s-' + id), v('front-s-' + id), v('width-s-' + id), rear);
@@ -637,23 +637,8 @@ function updateSummary() {
     var hasLong = v('road-l-' + id) > 0 || v('width-l-' + id) > 0;
     var minVal = (hasLong && rl.avgPt > 0) ? Math.min(rs.avgPt, rl.avgPt) : rs.avgPt;
     var floor = area * bcr, vol = floor * minVal;
-    var nameEl = document.getElementById('name-' + id);
-    var name = (nameEl && nameEl.value) || ('구역 ' + id);
-
-    var item = document.createElement('div');
-    item.className = 'summary-block-item';
-    item.innerHTML =
-      '<div class="summary-block-name">' + String(id).padStart(2,'0') + ' ' + name + '</div>'
-      + '<div class="summary-block-vals">'
-        + '<div class="sval">허용높이 <span>' + (minVal > 0 ? minVal.toFixed(1) + 'm' : '—') + '</span></div>'
-        + '<div class="sval">면적 <span>' + (area > 0 ? area.toLocaleString() + '㎡' : '—') + '</span></div>'
-        + '<div class="sval">바닥면적 <span>' + (floor > 0 ? Math.round(floor).toLocaleString() + '㎡' : '—') + '</span></div>'
-        + '<div class="sval">체적 <span>' + (vol > 0 ? Math.round(vol).toLocaleString() + '㎡' : '—') + '</span></div>'
-      + '</div>';
-    listEl.appendChild(item);
     if (area > 0 && minVal > 0) { tF += floor; tV += vol; valid = true; }
   });
-
   var avgH = tF > 0 ? tV / tF : 0;
   document.getElementById('avg-height').textContent = valid ? avgH.toFixed(1) : '—';
   document.getElementById('sum-vol').textContent = valid ? Math.round(tV).toLocaleString() + ' ㎡' : '—';
