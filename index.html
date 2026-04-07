@@ -87,7 +87,7 @@ input[type="number"]:focus, select:focus { border-color: var(--accent); }
 .tool-btn { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; font-weight: 500; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--text-sub); cursor: pointer; }
 .tool-btn.active { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
 .tool-btn.layer-on { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); }
-.measure-result { font-size: 10px; color: var(--warn); padding: 0 8px 6px; display: none; }
+.measure-result { font-size: 10px; color: var(--warn); padding: 0 8px 6px; display: none; font-family: 'DM Mono', monospace; }
 .measure-result.show { display: block; }
 
 .summary-title { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 14px; }
@@ -147,14 +147,12 @@ var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
 var MAP_H = 280;
 
 // ── 행안부 주소검색 API ───────────────────────────────
-// 도로명 변환용. 좌표는 포함 안 됨 → 별도 Nominatim으로 처리
 function jusoSearch(keyword, callback) {
   var url = 'https://business.juso.go.kr/addrlink/addrLinkApi.do'
     + '?confmKey=' + JUSO_KEY
     + '&currentPage=1&countPerPage=1'
     + '&keyword=' + encodeURIComponent(keyword)
     + '&resultType=json&addInfoYn=N';
-
   fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -166,8 +164,6 @@ function jusoSearch(keyword, callback) {
 }
 
 // ── Nominatim Geocoding ───────────────────────────────
-// 행안부 roadAddr(도로명)로 검색 → 정확도 대폭 향상
-// 실패 시 jibun(지번)으로 fallback
 function nominatimGeocode(query, callback) {
   var url = 'https://nominatim.openstreetmap.org/search'
     + '?format=json&limit=3&countrycodes=kr&addressdetails=1'
@@ -175,9 +171,7 @@ function nominatimGeocode(query, callback) {
   fetch(url, { headers: { 'Accept-Language': 'ko' } })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var kr = (data || []).filter(function(r) {
-        return r.address && r.address.country_code === 'kr';
-      });
+      var kr = (data || []).filter(function(r) { return r.address && r.address.country_code === 'kr'; });
       var best = kr.length > 0 ? kr[0] : (data && data[0]);
       if (best) callback(parseFloat(best.lat), parseFloat(best.lon));
       else callback(null, null);
@@ -185,21 +179,13 @@ function nominatimGeocode(query, callback) {
     .catch(function() { callback(null, null); });
 }
 
-// ── Geocoding 흐름 ────────────────────────────────────
-// 1. 행안부 API로 도로명 취득
-// 2. 그 도로명으로 Nominatim 좌표 검색
-// 3. 실패 시 지번으로 Nominatim 재시도
 function geocode(road, jibun, onSuccess, onFail) {
-  // 행안부에서 정확한 도로명 먼저 가져오기
   jusoSearch(road || jibun, function(juso, err) {
     var roadAddr = (juso && juso.roadAddrPart1) || road;
-
     nominatimGeocode(roadAddr, function(lat, lng) {
       if (lat && lng) { onSuccess(lat, lng); return; }
-      // roadAddr 실패 → jibun으로 재시도
       nominatimGeocode(jibun, function(lat2, lng2) {
         if (lat2 && lng2) { onSuccess(lat2, lng2); return; }
-        // 동 단위 rough fallback
         var rough = (road || jibun).split(' ').slice(0, 3).join(' ');
         nominatimGeocode(rough, function(lat3, lng3) {
           if (lat3 && lng3) onSuccess(lat3, lng3);
@@ -211,10 +197,7 @@ function geocode(road, jibun, onSuccess, onFail) {
 }
 
 // ── 지도 초기화 ───────────────────────────────────────
-// [수정2] 기존 지도 인스턴스 항상 제거 후 재생성
-// → 재검색 시 Leaflet "Map container is already initialized" 오류 방지
 function initMap(id, lat, lng, label) {
-  // 기존 지도 완전 제거
   if (mapObjs[id] && mapObjs[id].map) {
     try { mapObjs[id].map.remove(); } catch(e) {}
     delete mapObjs[id];
@@ -241,8 +224,19 @@ function initMap(id, lat, lng, label) {
   marker.bindPopup('<div style="font-size:11px;white-space:nowrap;">' + label + '</div>').openPopup();
 
   mapObjs[id] = { map: map, cadastralLayer: cadastralLayer, marker: marker, cadastralOn: true };
-  measureState[id] = { on: false, points: [], polyline: null, clickFn: null };
 
+  // ── 거리재기 상태 ──────────────────────────────────
+  measureState[id] = {
+    on: false,
+    points: [],       // 클릭 확정 좌표 배열
+    dotMarkers: [],   // 클릭 점 원형 마커
+    polyline: null,   // 확정 선
+    previewLine: null,// 마우스 따라가는 프리뷰 선
+    clickFn: null,
+    moveFn: null
+  };
+
+  // 지적도 토글
   document.getElementById('cadastral-btn-' + id).onclick = function() {
     var obj = mapObjs[id]; var btn = this;
     if (obj.cadastralOn) {
@@ -254,29 +248,69 @@ function initMap(id, lat, lng, label) {
     }
   };
 
+  // 거리재기
   document.getElementById('measure-btn-' + id).onclick = function() {
     var st = measureState[id]; var btn = this;
     var res = document.getElementById('measure-result-' + id);
     if (st.on) {
-      st.on = false; btn.classList.remove('active'); btn.textContent = '거리재기';
-      map.off('click', st.clickFn); map.getContainer().style.cursor = '';
+      // 종료
+      st.on = false;
+      btn.classList.remove('active'); btn.textContent = '거리재기';
+      map.off('click', st.clickFn);
+      map.off('mousemove', st.moveFn);
+      map.getContainer().style.cursor = '';
+      // 프리뷰 선 제거
+      if (st.previewLine) { map.removeLayer(st.previewLine); st.previewLine = null; }
     } else {
-      clearMeasure(id); st.on = true;
+      // 시작
+      clearMeasure(id);
+      st.on = true;
       btn.classList.add('active'); btn.textContent = '측정 종료';
       res.className = 'measure-result';
       map.getContainer().style.cursor = 'crosshair';
+
+      // 클릭: 점 확정
       st.clickFn = function(e) {
         st.points.push(e.latlng);
+
+        // 클릭 점 원형 마커 추가
+        var dot = L.circleMarker(e.latlng, {
+          radius: 4,
+          color: '#b45309',
+          fillColor: '#fff',
+          fillOpacity: 1,
+          weight: 2
+        }).addTo(map);
+        st.dotMarkers.push(dot);
+
+        // 확정 선 갱신
         if (st.polyline) map.removeLayer(st.polyline);
         if (st.points.length >= 2) {
-          st.polyline = L.polyline(st.points, { color: '#b45309', weight: 2, opacity: 0.9 }).addTo(map);
+          st.polyline = L.polyline(st.points, {
+            color: '#b45309', weight: 2.5, opacity: 1,
+            dashArray: null
+          }).addTo(map);
+
           var dist = 0;
           for (var i = 1; i < st.points.length; i++) dist += st.points[i-1].distanceTo(st.points[i]);
           res.className = 'measure-result show';
-          res.textContent = '총 거리: ' + dist.toFixed(1) + ' m';
+          res.textContent = '총 거리: ' + dist.toFixed(1) + ' m  |  구간: ' + (st.points.length - 1) + '개';
         }
       };
+
+      // 마우스 이동: 프리뷰 선 (마지막 확정 점 → 현재 마우스)
+      st.moveFn = function(e) {
+        if (st.points.length === 0) return;
+        var last = st.points[st.points.length - 1];
+        if (st.previewLine) map.removeLayer(st.previewLine);
+        st.previewLine = L.polyline([last, e.latlng], {
+          color: '#b45309', weight: 1.5, opacity: 0.5,
+          dashArray: '6 4'  // 점선으로 프리뷰 표시
+        }).addTo(map);
+      };
+
       map.on('click', st.clickFn);
+      map.on('mousemove', st.moveFn);
     }
   };
 
@@ -291,8 +325,12 @@ function initMap(id, lat, lng, label) {
 function clearMeasure(id) {
   var st = measureState[id]; if (!st) return;
   var obj = mapObjs[id];
-  if (st.polyline && obj) obj.map.removeLayer(st.polyline);
-  st.points = []; st.polyline = null;
+  if (!obj) return;
+  if (st.polyline)     { obj.map.removeLayer(st.polyline);     st.polyline = null; }
+  if (st.previewLine)  { obj.map.removeLayer(st.previewLine);  st.previewLine = null; }
+  st.dotMarkers.forEach(function(m) { obj.map.removeLayer(m); });
+  st.dotMarkers = [];
+  st.points = [];
 }
 
 function showGeoError(id) {
