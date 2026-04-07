@@ -147,101 +147,79 @@ var blockCount = 0, blocks = [], mapObjs = {}, measureState = {};
 var MAP_H = 280;
 
 // ── 행안부 주소검색 API ───────────────────────────────
-// keyword 검색 → roadAddr(도로명) + entX/entY(좌표, EPSG:4326) 반환
-// CORS 허용 확인됨 (인터넷망 키)
+// 도로명 변환용. 좌표는 포함 안 됨 → 별도 Nominatim으로 처리
 function jusoSearch(keyword, callback) {
   var url = 'https://business.juso.go.kr/addrlink/addrLinkApi.do'
     + '?confmKey=' + JUSO_KEY
     + '&currentPage=1&countPerPage=1'
     + '&keyword=' + encodeURIComponent(keyword)
-    + '&resultType=json'
-    + '&hstryYn=N&firstSort=location&addInfoYn=Y';
+    + '&resultType=json&addInfoYn=N';
 
   fetch(url)
     .then(function(r) { return r.json(); })
-    .then(function(data) {
-      var list = data && data.results && data.results.juso;
+    .then(function(d) {
+      var list = d && d.results && d.results.juso;
       if (list && list.length > 0) callback(list[0], null);
       else callback(null, '검색 결과가 없습니다.');
     })
-    .catch(function(e) { callback(null, '검색 중 오류: ' + e.message); });
+    .catch(function(e) { callback(null, e.message); });
 }
 
-// ── Geocoding ────────────────────────────────────────
-// 행안부 API → entX(경도), entY(위도) 직접 사용
-// 실패 시 Nominatim fallback
+// ── Nominatim Geocoding ───────────────────────────────
+// 행안부 roadAddr(도로명)로 검색 → 정확도 대폭 향상
+// 실패 시 jibun(지번)으로 fallback
+function nominatimGeocode(query, callback) {
+  var url = 'https://nominatim.openstreetmap.org/search'
+    + '?format=json&limit=3&countrycodes=kr&addressdetails=1'
+    + '&q=' + encodeURIComponent('대한민국 ' + query);
+  fetch(url, { headers: { 'Accept-Language': 'ko' } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var kr = (data || []).filter(function(r) {
+        return r.address && r.address.country_code === 'kr';
+      });
+      var best = kr.length > 0 ? kr[0] : (data && data[0]);
+      if (best) callback(parseFloat(best.lat), parseFloat(best.lon));
+      else callback(null, null);
+    })
+    .catch(function() { callback(null, null); });
+}
+
+// ── Geocoding 흐름 ────────────────────────────────────
+// 1. 행안부 API로 도로명 취득
+// 2. 그 도로명으로 Nominatim 좌표 검색
+// 3. 실패 시 지번으로 Nominatim 재시도
 function geocode(road, jibun, onSuccess, onFail) {
-  var keyword = road || jibun;
-  jusoSearch(keyword, function(juso, err) {
-    if (juso) {
-      var lat = parseFloat(juso.entY);
-      var lng = parseFloat(juso.entX);
+  // 행안부에서 정확한 도로명 먼저 가져오기
+  jusoSearch(road || jibun, function(juso, err) {
+    var roadAddr = (juso && juso.roadAddrPart1) || road;
+
+    nominatimGeocode(roadAddr, function(lat, lng) {
       if (lat && lng) { onSuccess(lat, lng); return; }
-    }
-    // fallback: Nominatim
-    geocodeNominatim(road, jibun, onSuccess, onFail);
-  });
-}
-
-function geocodeNominatim(road, jibun, onSuccess, onFail) {
-  var tries = [];
-  if (road)  tries.push('대한민국 ' + road);
-  if (jibun) tries.push('대한민국 ' + jibun);
-  var base = (road || jibun || '').split(' ');
-  if (base.length > 2) tries.push('대한민국 ' + base.slice(0, 3).join(' '));
-
-  var i = 0;
-  function next() {
-    if (i >= tries.length) { onFail(); return; }
-    var url = 'https://nominatim.openstreetmap.org/search'
-      + '?format=json&limit=3&countrycodes=kr&addressdetails=1'
-      + '&q=' + encodeURIComponent(tries[i++]);
-    fetch(url, { headers: { 'Accept-Language': 'ko' } })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        var kr = (data || []).filter(function(r) { return r.address && r.address.country_code === 'kr'; });
-        var best = kr.length > 0 ? kr[0] : (data && data[0]);
-        if (best) onSuccess(parseFloat(best.lat), parseFloat(best.lon));
-        else next();
-      })
-      .catch(function() { next(); });
-  }
-  next();
-}
-
-// ── 지번→도로명 변환 ──────────────────────────────────
-// 행안부 API 직접 사용 → 정확한 도로명주소 반환
-// 실패 시 Nominatim addressdetails fallback
-function convertToRoad(keyword, onSuccess, onFail) {
-  jusoSearch(keyword, function(juso, err) {
-    if (juso && juso.roadAddr) {
-      onSuccess(juso.roadAddr, juso.jibunAddr);
-    } else {
-      // fallback: Nominatim
-      var url = 'https://nominatim.openstreetmap.org/search'
-        + '?format=json&limit=1&countrycodes=kr&addressdetails=1'
-        + '&q=' + encodeURIComponent('대한민국 ' + keyword);
-      fetch(url, { headers: { 'Accept-Language': 'ko' } })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (!data || data.length === 0) { onFail('검색 결과가 없습니다.'); return; }
-          var a = data[0].address || {};
-          var parts = [];
-          if (a.city || a.province) parts.push(a.city || a.province);
-          if (a.county || a.borough) parts.push(a.county || a.borough);
-          if (a.suburb || a.quarter) parts.push(a.suburb || a.quarter);
-          if (a.road) parts.push(a.road);
-          if (a.house_number) parts.push(a.house_number);
-          var road = parts.join(' ') || data[0].display_name.split(',').slice(0,4).join(',').trim();
-          onSuccess(road, keyword);
-        })
-        .catch(function() { onFail('변환 중 오류가 발생했습니다.'); });
-    }
+      // roadAddr 실패 → jibun으로 재시도
+      nominatimGeocode(jibun, function(lat2, lng2) {
+        if (lat2 && lng2) { onSuccess(lat2, lng2); return; }
+        // 동 단위 rough fallback
+        var rough = (road || jibun).split(' ').slice(0, 3).join(' ');
+        nominatimGeocode(rough, function(lat3, lng3) {
+          if (lat3 && lng3) onSuccess(lat3, lng3);
+          else onFail();
+        });
+      });
+    });
   });
 }
 
 // ── 지도 초기화 ───────────────────────────────────────
+// [수정2] 기존 지도 인스턴스 항상 제거 후 재생성
+// → 재검색 시 Leaflet "Map container is already initialized" 오류 방지
 function initMap(id, lat, lng, label) {
+  // 기존 지도 완전 제거
+  if (mapObjs[id] && mapObjs[id].map) {
+    try { mapObjs[id].map.remove(); } catch(e) {}
+    delete mapObjs[id];
+  }
+
   var wrap = document.getElementById('map-' + id);
   if (!wrap) return;
   wrap.innerHTML = '<div id="lmap-' + id + '" style="width:100%;height:' + MAP_H + 'px;"></div>';
@@ -317,18 +295,6 @@ function clearMeasure(id) {
   st.points = []; st.polyline = null;
 }
 
-function placeMap(id, lat, lng, label) {
-  var obj = mapObjs[id];
-  if (obj && obj.map) {
-    obj.map.setView([lat, lng], 17);
-    if (obj.marker) obj.map.removeLayer(obj.marker);
-    obj.marker = L.marker([lat, lng]).addTo(obj.map);
-    obj.marker.bindPopup('<div style="font-size:11px;white-space:nowrap;">' + label + '</div>').openPopup();
-  } else {
-    initMap(id, lat, lng, label);
-  }
-}
-
 function showGeoError(id) {
   var wrap = document.getElementById('map-' + id);
   if (wrap) wrap.innerHTML =
@@ -361,14 +327,21 @@ function openAddressSearch(id) {
       if (wrap) wrap.innerHTML = '<div class="map-placeholder" style="height:' + MAP_H + 'px;">좌표 검색 중...</div>';
 
       geocode(road, jibun,
-        function(lat, lng) { placeMap(id, lat, lng, label); },
+        function(lat, lng) { initMap(id, lat, lng, label); },
         function() { showGeoError(id); }
       );
     }
   }).open();
 }
 
-// ── 지번→도로명 변환 실행 ────────────────────────────
+// ── 지번→도로명 변환 ──────────────────────────────────
+function convertToRoad(keyword, onSuccess, onFail) {
+  jusoSearch(keyword, function(juso, err) {
+    if (juso && juso.roadAddr) { onSuccess(juso.roadAddr); return; }
+    onFail(err || '검색 결과가 없습니다.');
+  });
+}
+
 function runConvert(id) {
   var input   = document.getElementById('conv-input-' + id);
   var result  = document.getElementById('conv-result-' + id);
@@ -555,7 +528,7 @@ function addBlock() {
 function removeBlock(id) {
   blocks = blocks.filter(function(b) { return b !== id; });
   var obj = mapObjs[id];
-  if (obj && obj.map) obj.map.remove();
+  if (obj && obj.map) { try { obj.map.remove(); } catch(e) {} }
   delete mapObjs[id]; delete measureState[id];
   var el = document.getElementById('block-' + id); if (el) el.remove();
   updateSummary();
