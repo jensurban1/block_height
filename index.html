@@ -532,6 +532,16 @@ function addBlock() {
   div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function copyAddr(id) {
+  var badge = document.getElementById('bc-addr-'+id);
+  var addr = badge ? badge.textContent : '';
+  if (!addr || addr === '주소 미설정') return;
+  navigator.clipboard.writeText(addr).then(function() {
+    var btn = document.getElementById('bc-copy-'+id);
+    if (btn) { btn.textContent='복사됨 ✓'; setTimeout(function(){btn.textContent='주소 복사';},1500); }
+  });
+}
+
 function removeBlock(id) {
   blocks=blocks.filter(function(b){return b!==id;});
   delete pnuStore[id];
