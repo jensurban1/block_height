@@ -271,6 +271,7 @@ html, body {
         <option value="">— 선택 —</option>
       </select>
       <button class="map-search-btn" onclick="openHeaderSearch()">📍 주소 검색</button>
+      <button class="map-ext-btn" id="copy-addr-btn" onclick="copyAddrFromTarget()">주소 복사</button>
       <div class="map-addr-badge" id="header-addr-badge">검색 결과 표시</div>
       <!-- [3번] 외부 링크 -->
       <a class="map-ext-btn" href="https://www.eum.go.kr/web/am/amMain.jsp" target="_blank">토지이음 ↗</a>
@@ -419,6 +420,19 @@ function resolveAddr(road, jibun, blockId, onOk, onFail) {
 }
 
 // ── 주소 검색 ─────────────────────────────────────────
+function copyAddrFromTarget() {
+  var targetId = parseInt(document.getElementById("target-sel").value);
+  if (!targetId) { alert("복사할 구역을 선택해 주세요."); return; }
+  var badge = document.getElementById("bc-addr-" + targetId);
+  var addr = badge ? badge.textContent : "";
+  if (!addr || addr === "주소 미설정") { alert("검색된 주소가 없습니다."); return; }
+  navigator.clipboard.writeText(addr).then(function() {
+    var btn = document.getElementById("copy-addr-btn");
+    btn.textContent = "복사됨 ✓";
+    setTimeout(function() { btn.textContent = "주소 복사"; }, 1500);
+  });
+}
+
 function openHeaderSearch() {
   var targetId=parseInt(document.getElementById('target-sel').value);
   if (!blocks.length) { alert('먼저 구역을 추가해 주세요.'); return; }
@@ -472,9 +486,8 @@ function addBlock() {
     '<div class="bc-head">'
       +'<span class="bc-num">'+String(id).padStart(2,'0')+'</span>'
       +'<input class="bc-name" type="text" placeholder="구역명 입력" id="bc-name-'+id+'">'
-+'<span class="bc-addr-badge" id="bc-addr-'+id+'">주소 미설정</span>'
-+'<button class="bc-copy" id="bc-copy-'+id+'" onclick="copyAddr('+id+')" style="font-size:10px;font-family:\'Noto Sans KR\',sans-serif;padding:2px 7px;border-radius:3px;border:1px solid var(--border);background:var(--surface);color:var(--text-sub);cursor:pointer;flex-shrink:0;">주소 복사</button>'
-+'<button class="bc-del" onclick="removeBlock('+id+')">삭제</button>'
+      +'<span class="bc-addr-badge" id="bc-addr-'+id+'">주소 미설정</span>'
+      +'<button class="bc-del" onclick="removeBlock('+id+')">삭제</button>'
     +'</div>'
     +'<div class="bc-body">'
       +'<input type="hidden" id="bc-bcr-'+id+'" value="60">'
@@ -505,7 +518,7 @@ function addBlock() {
         +'<div class="bc-field"><label>전면도로폭 (m)</label><input type="number" id="bc-rs-'+id+'" placeholder="50" oninput="calc('+id+')"></div>'
         +'<div class="bc-field"><label>전면건축선후퇴 (m)</label><input type="number" id="bc-fs-'+id+'" value="3" oninput="calc('+id+')"></div>'
         +'<div class="bc-field"><label>획지깊이 (m)</label><input type="number" id="bc-ws-'+id+'" placeholder="24.6" oninput="calc('+id+')"></div>'
-        +'<div class="bc-field"><label>획지깊이(산정용)</label><input type="number" id="bc-ds-'+id+'" readonly></div>'
+        +'<div class="bc-field"><label>산정용 획지깊이</label><input type="number" id="bc-ds-'+id+'" readonly></div>'
       +'</div>'
 
       +'<div class="bc-sec">장변</div>'
@@ -530,16 +543,6 @@ function addBlock() {
   updateSummary();
   // 새 카드로 스크롤
   div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function copyAddr(id) {
-  var badge = document.getElementById('bc-addr-'+id);
-  var addr = badge ? badge.textContent : '';
-  if (!addr || addr === '주소 미설정') return;
-  navigator.clipboard.writeText(addr).then(function() {
-    var btn = document.getElementById('bc-copy-'+id);
-    if (btn) { btn.textContent='복사됨 ✓'; setTimeout(function(){btn.textContent='주소 복사';},1500); }
-  });
 }
 
 function removeBlock(id) {
@@ -595,5 +598,6 @@ function updateSummary(){
 
 addBlock();
 </script>
+<div style="position:fixed;bottom:8px;right:12px;font-size:10px;color:rgba(0,0,0,0.28);font-family:'DM Mono',monospace;pointer-events:none;z-index:999;">© 2025 Jensurban. All rights reserved.</div>
 </body>
 </html>
