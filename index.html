@@ -169,7 +169,7 @@ html, body {
 .bc-name::placeholder { color: var(--text-hint); font-weight: 400; }
 .bc-addr-badge {
   font-size: 11px; color: var(--text-hint); font-family: 'DM Mono', monospace;
-  max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+  max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
 }
 .bc-del {
   font-size: 11px; color: var(--text-hint); background: none;
@@ -300,7 +300,7 @@ html, body {
 var VKEY       = 'FD876FCA-7CF2-38C7-B540-7A74F1A49B4E';
 var JUSO_KEY   = 'U01TX0FVVEgyMDI2MDQwNzE0MzkwODExNzg2NTc=';
 var KAKAO_REST = '04dfcd40ee2cd4c572be4a581523fb54';
-var blockCount = 0, blocks = [], pnuStore = {};
+var blockCount = 0, blocks = [], pnuStore = {}, landUseStore = {};
 
 // ── 공유 지도 ─────────────────────────────────────────
 var sharedMap = L.map('shared-map', { center: [37.5665, 126.9780], zoom: 12 });
@@ -378,7 +378,77 @@ function moveMap(lat, lng, label) {
   currentMarker = L.marker([lat,lng]).addTo(sharedMap);
   currentMarker.bindPopup('<div style="font-size:12px;font-weight:600;">'+label+'</div>').openPopup();
   document.getElementById('map-badge').textContent = label;
-  document.getElementById('header-addr-badge').textContent = label;
+  // header-addr-badge는 getLandUse가 업데이트하므로 여기서 건드리지 않음
+}
+
+// ── JSONP 헬퍼 ─────────────────────────────────────────
+function jsonp(url, callback) {
+  var cbName = 'jsonp_cb_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+  var script = document.createElement('script');
+  var timer = setTimeout(function() { cleanup(); callback(null, 'timeout'); }, 10000);
+  function cleanup() {
+    clearTimeout(timer);
+    try { delete window[cbName]; } catch(e) { window[cbName] = undefined; }
+    if (script.parentNode) script.parentNode.removeChild(script);
+  }
+  window[cbName] = function(data) { cleanup(); callback(data, null); };
+  script.onerror = function() { cleanup(); callback(null, 'error'); };
+  script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cbName;
+  document.body.appendChild(script);
+}
+
+// ── 토지이용계획 조회 ─────────────────────────────────
+function getLandUse(pnu, blockId, addrLabel) {
+  var url = 'https://api.vworld.kr/ned/data/getLandUseAttr'
+    + '?pnu=' + pnu
+    + '&numOfRows=100&pageNo=1'
+    + '&format=json&domain=https://jensurban1.github.io'
+    + '&key=' + VKEY;
+
+  jsonp(url, function(data, err) {
+    var badge = document.getElementById('header-addr-badge');
+    var cardBadge = document.getElementById('bc-addr-' + blockId);
+
+    if (err || !data) {
+      console.warn('[토지이용계획] 호출 실패:', err, 'PNU=', pnu);
+      if (badge) badge.textContent = addrLabel + ' · 조회 실패';
+      return;
+    }
+    console.log('[토지이용계획] 응답:', data); // 디버깅용
+
+    // 응답 구조: data.landUses.field = [{ prposAreaDstrcCodeNm, cnflcAt, ... }, ...]
+    var fields = null;
+    if (data.landUses && data.landUses.field) fields = data.landUses.field;
+    else if (data.response && data.response.result) fields = data.response.result;
+
+    if (!fields || (Array.isArray(fields) && fields.length === 0)) {
+      if (badge) badge.textContent = addrLabel + ' · 용도지역 정보 없음';
+      return;
+    }
+    if (!Array.isArray(fields)) fields = [fields]; // 1건일 때 객체로 오는 경우 대응
+
+    // 중복 제거 + 전부 나열
+    var zones = [];
+    var seen = {};
+    fields.forEach(function(f) {
+      var nm = f.prposAreaDstrcCodeNm || f.lnmAdres || '';
+      if (nm && !seen[nm]) { seen[nm] = true; zones.push(nm); }
+    });
+    var zoneText = zones.length ? zones.join(', ') : '용도지역 정보 없음';
+    var fullText = addrLabel + ' · ' + zoneText;
+
+    landUseStore[blockId] = zoneText;
+
+    if (badge) {
+      badge.textContent = fullText;
+      badge.title = fullText; // hover 시 전체 표시
+    }
+    if (cardBadge) {
+      var baseAddr = (cardBadge.textContent.split(' · ')[0] || addrLabel);
+      cardBadge.textContent = baseAddr + ' · ' + zoneText;
+      cardBadge.title = fullText;
+    }
+  });
 }
 
 // ── Geocoding ─────────────────────────────────────────
@@ -399,21 +469,35 @@ function jusoSearch(kw, cb) {
     .catch(function(){cb(null);});
 }
 
+// ── 주소 → 좌표 + PNU + 토지이용계획 ───────────────────
 function resolveAddr(road, jibun, blockId, onOk, onFail) {
-  jusoSearch(road||jibun, function(juso) {
-    if (juso&&juso.admCd) {
-      pnuStore[blockId]=juso.admCd+juso.mtYn
-        +String(juso.lnbrMnnm).padStart(4,'0')+String(juso.lnbrSlno).padStart(4,'0');
+  var addrLabel = road || jibun;
+
+  // (1) 주소 → PNU → 토지이용계획
+  jusoSearch(road || jibun, function(juso) {
+    if (juso && juso.admCd) {
+      var pnu = juso.admCd + juso.mtYn
+        + String(juso.lnbrMnnm).padStart(4, '0')
+        + String(juso.lnbrSlno).padStart(4, '0');
+      pnuStore[blockId] = pnu;
+      console.log('[PNU] blockId=' + blockId + ' pnu=' + pnu);
+      getLandUse(pnu, blockId, addrLabel);
+    } else {
+      console.warn('[PNU 조립 실패] juso 응답에 admCd 없음:', juso);
+      var badge = document.getElementById('header-addr-badge');
+      if (badge) badge.textContent = addrLabel;
     }
   });
-  kakaoGeocode(jibun||road, function(la,lo) {
-    if (la&&lo) { onOk(la,lo); return; }
-    kakaoGeocode(road, function(la2,lo2) {
-      if (la2&&lo2) { onOk(la2,lo2); return; }
+
+  // (2) 주소 → 좌표
+  kakaoGeocode(jibun || road, function(la, lo) {
+    if (la && lo) { onOk(la, lo); return; }
+    kakaoGeocode(road, function(la2, lo2) {
+      if (la2 && lo2) { onOk(la2, lo2); return; }
       fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=kr&q='
-        +encodeURIComponent('대한민국 '+(road||jibun)), {headers:{'Accept-Language':'ko'}})
-        .then(function(r){return r.json();})
-        .then(function(d){ if(d&&d[0]) onOk(parseFloat(d[0].lat),parseFloat(d[0].lon)); else onFail(); })
+        + encodeURIComponent('대한민국 ' + (road || jibun)), { headers: { 'Accept-Language': 'ko' } })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (d && d[0]) onOk(parseFloat(d[0].lat), parseFloat(d[0].lon)); else onFail(); })
         .catch(onFail);
     });
   });
@@ -548,6 +632,7 @@ function addBlock() {
 function removeBlock(id) {
   blocks=blocks.filter(function(b){return b!==id;});
   delete pnuStore[id];
+  delete landUseStore[id];
   var el=document.getElementById('block-'+id); if(el) el.remove();
   var opt=document.getElementById('target-opt-'+id); if(opt) opt.remove();
   updateSummary();
